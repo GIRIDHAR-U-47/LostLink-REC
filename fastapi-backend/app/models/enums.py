@@ -1,0 +1,20 @@
+from enum import Enum
+
+class Role(str, Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"
+
+class ItemType(str, Enum):
+    LOST = "LOST"
+    FOUND = "FOUND"
+
+class ItemStatus(str, Enum):
+    OPEN = "OPEN"
+    PENDING = "PENDING"
+    CLAIMED = "CLAIMED"
+    RESOLVED = "RESOLVED"
+
+class ClaimStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
