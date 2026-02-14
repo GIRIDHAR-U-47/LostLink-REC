@@ -63,7 +63,7 @@ async def report_item(
 @router.get("/found", response_model=List[ItemResponse])
 async def get_found_items(db = Depends(get_database)):
     # Get all FOUND items with PENDING status (not yet claimed)
-    cursor = db["items"].find({"type": "FOUND", "status": "PENDING"})
+    cursor = db["items"].find({"type": "FOUND", "status": "PENDING"}).sort("dateTime", -1)
     items = await cursor.to_list(length=100)
     
     results = []
@@ -80,7 +80,7 @@ async def get_my_requests(
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
-    cursor = db["items"].find({"user_id": str(current_user.id)})
+    cursor = db["items"].find({"user_id": str(current_user.id)}).sort("dateTime", -1)
     items = await cursor.to_list(length=100)
     return items
 

@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.core.database import get_database
 from app.models.enums import Role, ItemStatus, ItemType
 from app.models.user_model import UserResponse
+from app.models.item_model import ItemResponse
 from app.models.audit_model import AuditLog
 from app.models.notification_model import Notification
 from app.api.deps import get_current_user
@@ -12,7 +13,6 @@ from app.api.deps import get_current_user
 router = APIRouter()
 
 # ============ DASHBOARD STATISTICS ============
-
 @router.get("/stats/dashboard")
 async def get_dashboard_stats(
     current_user: UserResponse = Depends(get_current_user),
@@ -98,7 +98,7 @@ async def get_recovery_rate(
 
 # ============ SEARCH & FILTERS ============
 
-@router.get("/items/search")
+@router.get("/items/search", response_model=List[ItemResponse])
 async def search_items(
     current_user: UserResponse = Depends(get_current_user),
     query: Optional[str] = Query(None),

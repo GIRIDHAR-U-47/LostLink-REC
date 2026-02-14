@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import api from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const AdminFoundItemsScreen = ({ navigation }) => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     const fetchItems = async () => {
         try {
@@ -19,7 +20,13 @@ const AdminFoundItemsScreen = ({ navigation }) => {
             console.log('Error fetching items', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchItems();
     };
 
     useEffect(() => {
@@ -59,7 +66,7 @@ const AdminFoundItemsScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {loading ? (
+            {loading && !refreshing ? (
                 <ActivityIndicator size="large" color={COLORS.primary} />
             ) : (
                 <FlatList
@@ -68,6 +75,9 @@ const AdminFoundItemsScreen = ({ navigation }) => {
                     keyExtractor={item => item.id.toString()}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={<Text style={styles.emptyText}>No pending items to verify.</Text>}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 />
             )}
         </View>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import api from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const FoundItemsScreen = ({ navigation }) => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     const fetchItems = async () => {
         try {
@@ -15,7 +16,13 @@ const FoundItemsScreen = ({ navigation }) => {
             console.log('Error fetching found items', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchItems();
     };
 
     useEffect(() => {
@@ -51,7 +58,7 @@ const FoundItemsScreen = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Lost & Found Feed</Text>
-            {loading ? (
+            {loading && !refreshing ? (
                 <ActivityIndicator size="large" color={COLORS.primary} />
             ) : (
                 <FlatList
@@ -60,6 +67,9 @@ const FoundItemsScreen = ({ navigation }) => {
                     keyExtractor={item => item.id.toString()}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={<Text style={styles.emptyText}>No found items reported yet.</Text>}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 />
             )}
         </View>

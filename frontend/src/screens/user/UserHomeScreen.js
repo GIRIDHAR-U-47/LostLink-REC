@@ -1,12 +1,41 @@
-import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, SafeAreaView, Dimensions } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, SafeAreaView, Dimensions, RefreshControl } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { COLORS } from '../../constants/theme';
+import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
 const UserHomeScreen = ({ navigation }) => {
     const { logout, userInfo } = useContext(AuthContext);
+    const [stats, setStats] = useState({ myLost: 0, myClaims: 0, available: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const [foundRes, myReqRes] = await Promise.all([
+                api.get('/items/found'),
+                api.get('/items/my-requests')
+            ]);
+
+            const myRequests = myReqRes.data;
+            const myLostCount = myRequests.filter(item => item.type === 'LOST').length;
+
+            setStats({
+                myLost: myLostCount,
+                myClaims: 0, // Logic for claims count can be added later
+                available: foundRes.data.length
+            });
+        } catch (error) {
+            console.log('Error fetching user stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -22,7 +51,13 @@ const UserHomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.container}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={fetchStats} />
+                }
+            >
 
                 {/* Welcome Card */}
                 <View style={styles.welcomeCard}>
@@ -82,15 +117,15 @@ const UserHomeScreen = ({ navigation }) => {
                 {/* Dashboard Stats */}
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
-                        <Text style={styles.statNumber}>0</Text>
+                        <Text style={styles.statNumber}>{stats.myLost}</Text>
                         <Text style={styles.statLabel}>My Lost Items</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={styles.statNumber}>0</Text>
+                        <Text style={styles.statNumber}>{stats.myClaims}</Text>
                         <Text style={styles.statLabel}>My Claims</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <Text style={styles.statNumber}>0</Text>
+                        <Text style={styles.statNumber}>{stats.available}</Text>
                         <Text style={styles.statLabel}>Available Items</Text>
                     </View>
                 </View>

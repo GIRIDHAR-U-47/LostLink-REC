@@ -2,8 +2,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.core.database import db
+from dotenv import load_dotenv
 import os
+
+# Load environment variables
+load_dotenv()
+
+from app.core.database import db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
