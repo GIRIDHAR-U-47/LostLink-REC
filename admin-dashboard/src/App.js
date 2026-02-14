@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './styles/App.css';
 import Navbar from './components/Navbar';
@@ -23,6 +24,22 @@ const App = () => {
                 setUserInfo(JSON.parse(userInfoStr));
             }
         }
+
+        // Axios Interceptor to handle 401 Unauthorized
+        const interceptor = axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response && error.response.status === 401) {
+                    console.log('Session expired or invalid. Logging out...');
+                    handleLogout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
     }, [userToken]);
 
     const handleLogout = () => {

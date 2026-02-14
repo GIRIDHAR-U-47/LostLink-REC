@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import adminService from '../services/adminService';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
-
-const API_BASE = 'http://localhost:8080/api';
 
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
@@ -21,30 +19,22 @@ const Dashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const token = localStorage.getItem('userToken');
-            
             // Fetch main stats
-            const response = await axios.get(`${API_BASE}/admin/stats/dashboard`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setStats(response.data);
+            const statsRes = await adminService.getDashboardStats();
+            setStats(statsRes.data);
 
             // Fetch category stats
             try {
-                const categoryResponse = await axios.get(`${API_BASE}/admin/stats/category-breakdown`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setCategoryStats(categoryResponse.data);
+                const categoryRes = await adminService.getCategoryStats();
+                setCategoryStats(categoryRes.data);
             } catch (e) {
                 console.log('Category stats not available');
             }
 
             // Fetch recovery rate
             try {
-                const recoveryResponse = await axios.get(`${API_BASE}/admin/stats/recovery-rate`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setRecoveryRate(recoveryResponse.data);
+                const recoveryRes = await adminService.getRecoveryRate();
+                setRecoveryRate(recoveryRes.data);
             } catch (e) {
                 console.log('Recovery rate not available');
             }
@@ -65,39 +55,39 @@ const Dashboard = () => {
 
             {/* Key Metrics */}
             <div className="metrics-grid">
-                <div className="metric-box" style={{ borderTop: '4px solid #003366' }}>
-                    <div className="metric-label">Total Lost Items</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.total_lost}</div>
+                    <div className="metric-label">Total Lost Items</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #8bc34a' }}>
-                    <div className="metric-label">Total Found Items</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.total_found}</div>
+                    <div className="metric-label">Total Found Items</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #ff9800' }}>
-                    <div className="metric-label">Pending Verification</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.pending_verification}</div>
+                    <div className="metric-label">Pending Verification</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #2196F3' }}>
-                    <div className="metric-label">Available Items</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.available_items}</div>
+                    <div className="metric-label">Available Items</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #f44336' }}>
-                    <div className="metric-label">High-Risk Items</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.high_risk_items}</div>
+                    <div className="metric-label">High-Risk Items</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #009688' }}>
-                    <div className="metric-label">Pending Claims</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.pending_claims}</div>
+                    <div className="metric-label">Pending Claims</div>
                 </div>
 
-                <div className="metric-box" style={{ borderTop: '4px solid #4CAF50' }}>
-                    <div className="metric-label">Returned Today</div>
+                <div className="metric-box">
                     <div className="metric-value">{stats.returned_today}</div>
+                    <div className="metric-label">Returned Today</div>
                 </div>
             </div>
 
@@ -106,10 +96,10 @@ const Dashboard = () => {
                 <h2>Quick Actions</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '15px' }}>
                     <button className="btn btn-success" style={{ width: '100%' }}>
-                        ✅ Verify Found Items ({stats.pending_verification})
+                        Verify Found Items ({stats.pending_verification})
                     </button>
                     <button className="btn" style={{ width: '100%' }}>
-                        📋 Review Claims ({stats.pending_claims})
+                        Review Claims ({stats.pending_claims})
                     </button>
                     <button className="btn btn-danger" style={{ width: '100%' }}>
                         Check High-Risk Items ({stats.high_risk_items})
@@ -210,15 +200,15 @@ const Dashboard = () => {
                     <tbody>
                         <tr>
                             <td><strong>Database</strong></td>
-                            <td><span className="badge badge-approved">✓ Connected</span></td>
+                            <td><span className="badge badge-approved">Connected</span></td>
                         </tr>
                         <tr>
                             <td><strong>API Server</strong></td>
-                            <td><span className="badge badge-approved">✓ Running</span></td>
+                            <td><span className="badge badge-approved">Running</span></td>
                         </tr>
                         <tr>
                             <td><strong>Storage</strong></td>
-                            <td><span className="badge badge-approved">✓ Available</span></td>
+                            <td><span className="badge badge-approved">Available</span></td>
                         </tr>
                     </tbody>
                 </table>

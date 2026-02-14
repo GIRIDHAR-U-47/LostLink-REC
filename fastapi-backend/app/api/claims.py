@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from app.core.database import get_database
@@ -76,14 +76,18 @@ async def get_my_claims(
 
 @router.get("/status", response_model=List[ClaimResponse])
 async def get_claims_by_status(
-    status: ClaimStatus,
+    status: Optional[ClaimStatus] = Query(None),
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized")
         
-    cursor = db["claims"].find({"status": status})
+    filter_dict = {}
+    if status:
+        filter_dict["status"] = status
+        
+    cursor = db["claims"].find(filter_dict).sort("submissionDate", -1)
     claims = await cursor.to_list(length=100)
     
     # Populate

@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:8080/api';
+import adminService from '../services/adminService';
 
 const FoundItemsManagement = () => {
     const [items, setItems] = useState([]);
@@ -20,16 +18,14 @@ const FoundItemsManagement = () => {
     const fetchItems = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('userToken');
-            const params = new URLSearchParams();
-            if (searchQuery) params.append('query', searchQuery);
-            if (filters.category) params.append('category', filters.category);
-            if (filters.status) params.append('status', filters.status);
-            params.append('item_type', 'FOUND');
+            const params = {
+                query: searchQuery,
+                category: filters.category,
+                status: filters.status,
+                item_type: 'FOUND'
+            };
 
-            const response = await axios.get(`${API_BASE}/admin/items/search?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await adminService.searchItems(params);
             setItems(response.data || []);
         } catch (error) {
             console.log('Error fetching items:', error);
@@ -49,13 +45,7 @@ const FoundItemsManagement = () => {
         }
 
         try {
-            const token = localStorage.getItem('userToken');
-            await axios.put(`${API_BASE}/admin/items/${itemId}/assign-storage`, {
-                storage_location: storageLocation,
-                admin_remarks: remarks
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await adminService.assignStorage(itemId, storageLocation, remarks);
 
             alert('Storage location assigned successfully');
             setStorageLocation('');
@@ -87,7 +77,7 @@ const FoundItemsManagement = () => {
                 <select
                     className="search-input"
                     value={filters.category}
-                    onChange={(e) => setFilters({...filters, category: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
                     <option value="">All Categories</option>
                     <option value="DEVICES">Devices</option>
@@ -101,7 +91,7 @@ const FoundItemsManagement = () => {
                 <select
                     className="search-input"
                     value={filters.status}
-                    onChange={(e) => setFilters({...filters, status: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >
                     <option value="">All Status</option>
                     <option value="PENDING">Pending</option>

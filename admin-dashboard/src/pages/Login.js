@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import '../styles/Login.css';
-
-const API_BASE = 'http://localhost:8080/api';
 
 const Login = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState('');
@@ -16,7 +14,7 @@ const Login = ({ onLoginSuccess }) => {
         setLoading(true);
 
         try {
-            const response = await axios.post(`${API_BASE}/auth/login`, {
+            const response = await api.post('/auth/login', {
                 email,
                 password
             });
@@ -24,7 +22,7 @@ const Login = ({ onLoginSuccess }) => {
             const { token, roles, ...userInfo } = response.data;
 
             // Check if admin
-            if (!roles.includes('ADMIN')) {
+            if (!roles || !roles.includes('ADMIN')) {
                 setError('Access denied. Admin credentials required.');
                 setLoading(false);
                 return;
@@ -32,12 +30,12 @@ const Login = ({ onLoginSuccess }) => {
 
             // Save to localStorage
             localStorage.setItem('userToken', token);
-            localStorage.setItem('userInfo', JSON.stringify({...userInfo, roles}));
+            localStorage.setItem('userInfo', JSON.stringify({ ...userInfo, roles }));
 
             // Callback
-            onLoginSuccess(token, {...userInfo, roles});
+            onLoginSuccess(token, { ...userInfo, roles });
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed');
+            setError(err.response?.data?.detail || 'Login failed. Check server connection.');
         } finally {
             setLoading(false);
         }
@@ -47,7 +45,6 @@ const Login = ({ onLoginSuccess }) => {
         <div className="login-container">
             <div className="login-card">
                 <div className="login-header">
-                    <div className="login-icon">🏫</div>
                     <h1>REC LostLink</h1>
                     <p>Admin Dashboard</p>
                 </div>
@@ -59,7 +56,7 @@ const Login = ({ onLoginSuccess }) => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="admin@rajalakshmi.edu.in"
+                            placeholder="admin@rec.edu.in"
                             required
                         />
                     </div>
@@ -83,8 +80,8 @@ const Login = ({ onLoginSuccess }) => {
                 </form>
 
                 <div className="demo-credentials">
-                    <p><strong>Demo Credentials:</strong></p>
-                    <p>Email: admin@rajalakshmi.edu.in</p>
+                    <p><strong>Demo Admin Credentials:</strong></p>
+                    <p>Email: admin@rec.edu.in</p>
                     <p>Password: admin123</p>
                 </div>
             </div>

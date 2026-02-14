@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:8080/api';
+import adminService from '../services/adminService';
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
@@ -15,19 +13,13 @@ const Profile = () => {
     const fetchProfile = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('userToken');
-
             // Fetch admin profile
-            const profileResponse = await axios.get(`${API_BASE}/admin/profile`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProfile(profileResponse.data);
+            const profileRes = await adminService.getProfile();
+            setProfile(profileRes.data);
 
             // Fetch audit logs
-            const logsResponse = await axios.get(`${API_BASE}/admin/audit-logs?limit=50`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setAuditLogs(logsResponse.data || []);
+            const logsRes = await adminService.getAuditLogs(50);
+            setAuditLogs(logsRes.data || []);
         } catch (error) {
             console.log('Error fetching profile:', error);
         } finally {
@@ -36,17 +28,7 @@ const Profile = () => {
     };
 
     const getActionIcon = (action) => {
-        const actionMap = {
-            'verify_item': 'V',
-            'assign_storage': 'S',
-            'approve_claim': 'A',
-            'reject_claim': 'R',
-            'create_notification': 'N',
-            'update_item': 'U',
-            'delete_item': 'D',
-            'export_report': 'E'
-        };
-        return actionMap[action] || '•';
+        return null;
     };
 
     const getActionColor = (action) => {
@@ -65,58 +47,53 @@ const Profile = () => {
                 <>
                     {/* Profile Card */}
                     {profile && (
-                        <div className="card" style={{ marginBottom: '30px', backgroundColor: '#f8f9fa' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                <div style={{
-                                    width: '80px',
-                                    height: '80px',
-                                    borderRadius: '50%',
-                                    backgroundColor: '#003366',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '32px',
-                                    fontWeight: 'bold'
-                                }}>
-                                    {(profile.name || profile.email || 'A').charAt(0).toUpperCase()}
-                                </div>
+                        <div className="metric-card" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #671B95, #4A148C)',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 4px 10px rgba(103, 27, 149, 0.3)'
+                            }}>
+                                {(profile.name || profile.email || 'A').charAt(0).toUpperCase()}
+                            </div>
 
-                                <div style={{ flex: 1 }}>
-                                    <h2 style={{ margin: '0 0 5px 0' }}>{profile.name || 'Admin User'}</h2>
-                                    <p style={{ margin: '0 0 10px 0', color: '#666' }}>{profile.email}</p>
-                                    <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-                                        <strong>Role:</strong> {profile.roles?.includes('ADMIN') ? '👑 Administrator' : 'User'}
-                                    </p>
-                                </div>
+                            <div style={{ flex: 1 }}>
+                                <h2 style={{ margin: '0 0 5px 0', fontSize: '24px', color: '#1e293b' }}>{profile.name || 'Admin User'}</h2>
+                                <p style={{ margin: '0 0 10px 0', color: '#64748b' }}>{profile.email}</p>
+                                <span className="badge badge-available" style={{ fontSize: '13px' }}>
+                                    {profile.roles?.includes('ADMIN') ? 'Administrator' : 'User'}
+                                </span>
+                            </div>
 
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '12px' }}>Member Since</p>
-                                    <p style={{ margin: '0', fontWeight: 'bold' }}>
-                                        {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
-                                    </p>
-                                </div>
+                            <div style={{ textAlign: 'right', borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
+                                <p style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>Member Since</p>
+                                <p style={{ margin: '0', fontWeight: 'bold', fontSize: '16px', color: '#334155' }}>
+                                    {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
+                                </p>
                             </div>
                         </div>
                     )}
 
                     {/* Statistics Section */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
-                        <div className="card" style={{ backgroundColor: '#e3f2fd', borderLeft: '4px solid #2196F3' }}>
-                            <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '12px' }}>Total Actions</p>
-                            <h3 style={{ margin: '0' }}>{auditLogs.length}</h3>
+                    <div className="metrics-grid">
+                        <div className="metric-box">
+                            <div className="metric-value">{auditLogs.length}</div>
+                            <div className="metric-label">Total Actions</div>
                         </div>
-                        <div className="card" style={{ backgroundColor: '#f3e5f5', borderLeft: '4px solid #9c27b0' }}>
-                            <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '12px' }}>Items Verified</p>
-                            <h3 style={{ margin: '0' }}>
-                                {auditLogs.filter(log => log.action_type?.includes('verify')).length}
-                            </h3>
+                        <div className="metric-box">
+                            <div className="metric-value">{auditLogs.filter(log => log.action_type?.includes('verify')).length}</div>
+                            <div className="metric-label">Items Verified</div>
                         </div>
-                        <div className="card" style={{ backgroundColor: '#e8f5e9', borderLeft: '4px solid #4caf50' }}>
-                            <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '12px' }}>Claims Processed</p>
-                            <h3 style={{ margin: '0' }}>
-                                {auditLogs.filter(log => log.action_type?.includes('claim')).length}
-                            </h3>
+                        <div className="metric-box">
+                            <div className="metric-value">{auditLogs.filter(log => log.action_type?.includes('claim')).length}</div>
+                            <div className="metric-label">Claims Processed</div>
                         </div>
                     </div>
 
@@ -125,7 +102,6 @@ const Profile = () => {
 
                     {auditLogs.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">-</div>
                             <p>No activity records yet</p>
                         </div>
                     ) : (
@@ -154,7 +130,7 @@ const Profile = () => {
                                                     fontSize: '12px',
                                                     fontWeight: 'bold'
                                                 }}>
-                                                    {getActionIcon(log.action_type)} {log.action_type || 'N/A'}
+                                                    {log.action_type || 'N/A'}
                                                 </span>
                                             </td>
                                             <td>

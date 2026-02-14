@@ -54,7 +54,7 @@ const AdminLostItemsScreen = ({ navigation }) => {
                 />
             )}
 
-            <Text style={styles.location}>📍 {item.location}</Text>
+            <Text style={styles.location}>Location: {item.location}</Text>
             <Text style={styles.description}>{item.description}</Text>
             {item.user && (
                 <Text style={styles.reporter}>Reported by: {item.user.name}</Text>
@@ -76,13 +76,13 @@ const AdminLostItemsScreen = ({ navigation }) => {
                     onSubmitEditing={searchItems}
                 />
                 <TouchableOpacity onPress={searchItems} style={styles.searchBtn}>
-                    <Text style={styles.searchBtnText}>🔍</Text>
+                    <Text style={styles.searchBtnText}>Search</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                     onPress={() => setShowFilters(!showFilters)}
                     style={styles.filterBtn}
                 >
-                    <Text style={styles.searchBtnText}>⚙️</Text>
+                    <Text style={styles.searchBtnText}>Filter</Text>
                 </TouchableOpacity>
             </View>
 
@@ -93,13 +93,13 @@ const AdminLostItemsScreen = ({ navigation }) => {
                         style={styles.filterInput}
                         placeholder="Category (e.g., DEVICES)"
                         value={filters.category}
-                        onChangeText={(text) => setFilters({...filters, category: text})}
+                        onChangeText={(text) => setFilters({ ...filters, category: text })}
                     />
                     <TextInput
                         style={styles.filterInput}
                         placeholder="Status (e.g., PENDING)"
                         value={filters.status}
-                        onChangeText={(text) => setFilters({...filters, status: text})}
+                        onChangeText={(text) => setFilters({ ...filters, status: text })}
                     />
                     <TouchableOpacity style={styles.applyFilterBtn} onPress={searchItems}>
                         <Text style={styles.applyFilterBtnText}>Apply Filters</Text>

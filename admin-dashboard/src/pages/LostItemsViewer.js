@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:8080/api';
+import adminService from '../services/adminService';
+import { API_BASE_URL } from '../services/api';
 
 const LostItemsViewer = () => {
     const [items, setItems] = useState([]);
@@ -18,22 +17,20 @@ const LostItemsViewer = () => {
     const fetchItems = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('userToken');
-            const params = new URLSearchParams();
-            if (searchQuery) params.append('query', searchQuery);
-            if (filters.category) params.append('category', filters.category);
-            params.append('item_type', 'LOST');
+            const params = {
+                query: searchQuery,
+                category: filters.category,
+                item_type: 'LOST'
+            };
 
-            const response = await axios.get(`${API_BASE}/admin/items/search?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await adminService.searchItems(params);
             setItems(response.data || []);
         } catch (error) {
             console.log('Error fetching items:', error);
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters.category]);
 
     useEffect(() => {
         fetchItems();
@@ -74,7 +71,7 @@ const LostItemsViewer = () => {
                 <select
                     className="search-input"
                     value={filters.category}
-                    onChange={(e) => setFilters({...filters, category: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
                     <option value="">All Categories</option>
                     <option value="DEVICES">Devices</option>
@@ -88,7 +85,7 @@ const LostItemsViewer = () => {
                 <select
                     className="search-input"
                     value={filters.status}
-                    onChange={(e) => setFilters({...filters, status: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >
                     <option value="">All Status</option>
                     <option value="PENDING">Pending Verification</option>
@@ -101,7 +98,7 @@ const LostItemsViewer = () => {
                     type="date"
                     className="search-input"
                     value={filters.dateFrom}
-                    onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
                 />
             </div>
 
@@ -127,10 +124,9 @@ const LostItemsViewer = () => {
                                 style={{
                                     cursor: 'pointer',
                                     transition: 'transform 0.2s, box-shadow 0.2s',
-                                    borderLeft: `4px solid ${
-                                        item.status === 'RETURNED' ? '#28a745' :
+                                    borderLeft: `4px solid ${item.status === 'RETURNED' ? '#28a745' :
                                         item.status === 'PENDING' ? '#ffc107' : '#6c757d'
-                                    }`
+                                        }`
                                 }}
                                 onClick={() => setSelectedItem(item)}
                             >
@@ -217,7 +213,7 @@ const LostItemsViewer = () => {
                         {selectedItem.imageUrl && (
                             <div style={{ marginBottom: '20px' }}>
                                 <img
-                                    src={`http://10.234.72.182:8080/${selectedItem.imageUrl}`}
+                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl}`}
                                     alt={selectedItem.category}
                                     style={{
                                         maxWidth: '100%',

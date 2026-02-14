@@ -43,16 +43,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
     };
 
     const getNotificationIcon = (type) => {
-        switch (type) {
-            case 'HIGH_VALUE_ITEM':
-                return '⚠️';
-            case 'PENDING_CLAIM':
-                return '⚖️';
-            case 'NEW_FOUND_ITEM':
-                return '📦';
-            default:
-                return '🔔';
-        }
+        return null;
     };
 
     const renderItem = ({ item }) => (
@@ -61,7 +52,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
             onPress={() => handleMarkAsRead(item.id || item._id)}
         >
             <View style={styles.notificationHeader}>
-                <Text style={styles.icon}>{getNotificationIcon(item.notification_type)}</Text>
+
                 <View style={styles.titleSection}>
                     <Text style={styles.title}>{item.title}</Text>
                     <Text style={styles.date}>

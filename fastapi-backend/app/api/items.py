@@ -65,7 +65,15 @@ async def get_found_items(db = Depends(get_database)):
     # Get all FOUND items with PENDING status (not yet claimed)
     cursor = db["items"].find({"type": "FOUND", "status": "PENDING"})
     items = await cursor.to_list(length=100)
-    return items
+    
+    results = []
+    for item in items:
+        if "user_id" in item:
+            user = await db["users"].find_one({"_id": ObjectId(item["user_id"])})
+            if user:
+                item["user"] = user
+        results.append(item)
+    return results
 
 @router.get("/my-requests", response_model=List[ItemResponse])
 async def get_my_requests(

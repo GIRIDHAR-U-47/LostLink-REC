@@ -8,9 +8,11 @@ const LoginScreen = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const { login } = useContext(AuthContext);
 
+    const [isAdminLogin, setIsAdminLogin] = useState(false);
+
     const handleLogin = async () => {
         try {
-            await login(email, password);
+            await login(email, password, isAdminLogin); // Pass isAdmin flag to context if needed, or handle internally
         } catch (error) {
             Alert.alert('Login Failed', 'Could not connect to server. Check if backend is running.');
         }
@@ -25,13 +27,13 @@ const LoginScreen = ({ navigation }) => {
                     resizeMode="contain"
                 />
                 <Text style={styles.title}>REC LostLink</Text>
-                <Text style={styles.subtitle}>Lost & Found Management System</Text>
+                <Text style={styles.subtitle}>{isAdminLogin ? 'Admin Portal' : 'Lost & Found Management System'}</Text>
             </View>
 
             <View style={styles.formContainer}>
                 <TextInput
                     style={styles.input}
-                    placeholder="College Email ID"
+                    placeholder={isAdminLogin ? "Admin ID" : "College Email ID"}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -51,6 +53,15 @@ const LoginScreen = ({ navigation }) => {
 
                 <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.linkContainer}>
                     <Text style={styles.linkText}>Don't have an account? Register</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => setIsAdminLogin(!isAdminLogin)}
+                    style={[styles.adminToggle, isAdminLogin ? styles.adminToggleActive : null]}
+                >
+                    <Text style={[styles.adminToggleText, isAdminLogin ? styles.adminToggleTextActive : null]}>
+                        {isAdminLogin ? 'Switch to Student Login' : 'Admin Login'}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
@@ -112,6 +123,26 @@ const styles = StyleSheet.create({
     },
     linkText: {
         color: COLORS.primary,
+    },
+    adminToggle: {
+        marginTop: 30,
+        padding: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        alignSelf: 'center',
+        width: '60%',
+        alignItems: 'center',
+    },
+    adminToggleActive: {
+        backgroundColor: COLORS.primary,
+    },
+    adminToggleText: {
+        color: COLORS.primary,
+        fontWeight: '600',
+    },
+    adminToggleTextActive: {
+        color: COLORS.white,
     },
 });
 

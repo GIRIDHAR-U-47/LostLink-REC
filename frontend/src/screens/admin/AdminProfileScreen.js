@@ -46,7 +46,7 @@ const AdminProfileScreen = ({ navigation }) => {
                     <View style={styles.profileCard}>
                         <View style={styles.avatarSection}>
                             <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>👤</Text>
+                                <Text style={styles.avatarText}>{profile.name?.charAt(0).toUpperCase()}</Text>
                             </View>
                         </View>
 
@@ -77,7 +77,7 @@ const AdminProfileScreen = ({ navigation }) => {
                         onPress={() => setShowLogs(!showLogs)}
                     >
                         <Text style={styles.toggleBtnText}>
-                            {showLogs ? '📋 Hide Audit Logs' : '📋 Show Audit Logs'}
+                            {showLogs ? 'Hide Audit Logs' : 'Show Audit Logs'}
                         </Text>
                     </TouchableOpacity>
 

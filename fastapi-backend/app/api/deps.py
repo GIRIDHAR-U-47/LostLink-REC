@@ -29,7 +29,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get
     
     user = await db["users"].find_one({"email": email})
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     # helper to convert _id to str if needed, but Pydantic handles it via aliases usually if configured
     # We return the dict and Pydantic parses it

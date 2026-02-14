@@ -33,9 +33,10 @@ const AdminHomeScreen = ({ navigation }) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
+            {/* Header Gradient */}
             <View style={styles.header}>
-                <View style={styles.headerTop}>
+                <View style={styles.headerContent}>
                     <View>
                         <Text style={styles.welcomeText}>Admin Dashboard</Text>
                         <Text style={styles.subText}>{userInfo?.name} | Student Care</Text>
@@ -48,232 +49,260 @@ const AdminHomeScreen = ({ navigation }) => {
                 </View>
             </View>
 
-            {loading ? (
-                <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-            ) : stats ? (
-                <>
-                    {/* Key Metrics Row 1 */}
-                    <View style={styles.metricsRow}>
-                        <View style={[styles.metricBox, { backgroundColor: '#e3f2fd' }]}>
-                            <Text style={styles.metricLabel}>Lost Items</Text>
-                            <Text style={styles.metricValue}>{stats.total_lost}</Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                {loading ? (
+                    <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+                ) : stats ? (
+                    <>
+                        {/* Key Metrics Grid */}
+                        <View style={styles.metricsGrid}>
+                            <View style={styles.metricBox}>
+                                <Text style={styles.metricLabel}>LOST ITEMS</Text>
+                                <Text style={styles.metricValue}>{stats.total_lost}</Text>
+                            </View>
+                            <View style={styles.metricBox}>
+                                <Text style={styles.metricLabel}>FOUND ITEMS</Text>
+                                <Text style={styles.metricValue}>{stats.total_found}</Text>
+                            </View>
+                            <View style={styles.metricBox}>
+                                <Text style={styles.metricLabel}>PENDING</Text>
+                                <Text style={[styles.metricValue, { color: COLORS.warning }]}>{stats.pending_verification}</Text>
+                            </View>
+                            <View style={styles.metricBox}>
+                                <Text style={styles.metricLabel}>AVAILABLE</Text>
+                                <Text style={[styles.metricValue, { color: COLORS.success }]}>{stats.available_items}</Text>
+                            </View>
                         </View>
-                        <View style={[styles.metricBox, { backgroundColor: '#f3e5f5' }]}>
-                            <Text style={styles.metricLabel}>Found Items</Text>
-                            <Text style={styles.metricValue}>{stats.total_found}</Text>
+
+                        {/* Recent Returns Banner */}
+                        <View style={[styles.card, { backgroundColor: '#f0fdf4', borderLeftWidth: 4, borderLeftColor: COLORS.success }]}>
+                            <Text style={styles.cardLabel}>ITEMS RETURNED TODAY</Text>
+                            <Text style={[styles.largeValue, { color: COLORS.success }]}>{stats.returned_today}</Text>
                         </View>
-                    </View>
 
-                    {/* Key Metrics Row 2 */}
-                    <View style={styles.metricsRow}>
-                        <View style={[styles.metricBox, { backgroundColor: '#fff3e0' }]}>
-                            <Text style={styles.metricLabel}>Pending Verify</Text>
-                            <Text style={[styles.metricValue, { color: '#ff9800' }]}>{stats.pending_verification}</Text>
-                        </View>
-                        <View style={[styles.metricBox, { backgroundColor: '#f1f8e9' }]}>
-                            <Text style={styles.metricLabel}>Available</Text>
-                            <Text style={[styles.metricValue, { color: '#8bc34a' }]}>{stats.available_items}</Text>
-                        </View>
-                    </View>
+                        {/* Management Section */}
+                        <Text style={styles.sectionTitle}>Management Console</Text>
 
-                    {/* Key Metrics Row 3 */}
-                    <View style={styles.metricsRow}>
-                        <View style={[styles.metricBox, { backgroundColor: '#ffebee' }]}>
-                            <Text style={styles.metricLabel}>High-Risk Items</Text>
-                            <Text style={[styles.metricValue, { color: '#f44336' }]}>{stats.high_risk_items}</Text>
-                        </View>
-                        <View style={[styles.metricBox, { backgroundColor: '#e0f2f1' }]}>
-                            <Text style={styles.metricLabel}>Pending Claims</Text>
-                            <Text style={[styles.metricValue, { color: '#009688' }]}>{stats.pending_claims}</Text>
-                        </View>
-                    </View>
+                        <TouchableOpacity
+                            style={styles.navCard}
+                            onPress={() => navigation.navigate('AdminFoundItems')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: COLORS.lavender }]}>
+                                <Text style={{ fontSize: 24 }}>📦</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.cardTitle}>Found Items</Text>
+                                <Text style={styles.cardDesc}>Verify & Assign Storage</Text>
+                            </View>
+                            <View style={styles.badgeContainer}>
+                                <Text style={styles.badgeTextSmall}>{stats.pending_verification}</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    {/* Returned Today */}
-                    <View style={[styles.card, { backgroundColor: '#c8e6c9' }]}>
-                        <Text style={styles.cardLabel}>Items Returned Today</Text>
-                        <Text style={[styles.largeValue, { color: '#2e7d32' }]}>{stats.returned_today}</Text>
-                    </View>
+                        <TouchableOpacity
+                            style={styles.navCard}
+                            onPress={() => navigation.navigate('AdminLostItems')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: '#e0f2fe' }]}>
+                                <Text style={{ fontSize: 24 }}>🔍</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.cardTitle}>Lost Reports</Text>
+                                <Text style={styles.cardDesc}>View & Track Reports</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    {/* Action Cards */}
-                    <Text style={styles.sectionTitle}>Management</Text>
+                        <TouchableOpacity
+                            style={styles.navCard}
+                            onPress={() => navigation.navigate('AdminClaims')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: '#fef3c7' }]}>
+                                <Text style={{ fontSize: 24 }}>📝</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.cardTitle}>Claims</Text>
+                                <Text style={styles.cardDesc}>Approve Ownership</Text>
+                            </View>
+                            <View style={[styles.badgeContainer, { backgroundColor: COLORS.warning }]}>
+                                <Text style={styles.badgeTextSmall}>{stats.pending_claims}</Text>
+                            </View>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[styles.card, { backgroundColor: COLORS.lavender }]}
-                        onPress={() => navigation.navigate('AdminFoundItems')}
-                    >
-                        <Text style={styles.cardTitle}>📦 Manage Found Items</Text>
-                        <Text style={styles.cardDesc}>Verify physical receipt, assign storage location</Text>
-                        <Text style={styles.actionBadge}>{stats.pending_verification} pending</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.card, { backgroundColor: COLORS.pastel }]}
-                        onPress={() => navigation.navigate('AdminLostItems')}
-                    >
-                        <Text style={styles.cardTitle}>🔍 View Lost Reports</Text>
-                        <Text style={styles.cardDesc}>Search and view all lost item reports</Text>
-                        <Text style={styles.actionBadge}>{stats.total_lost} reports</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.card, { backgroundColor: '#e1f5fe' }]}
-                        onPress={() => navigation.navigate('AdminClaims')}
-                    >
-                        <Text style={styles.cardTitle}>⚖️ Manage Claims</Text>
-                        <Text style={styles.cardDesc}>Approve or reject ownership claims</Text>
-                        <Text style={styles.actionBadge}>{stats.pending_claims} pending</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.card, { backgroundColor: '#f3e5f5' }]}
-                        onPress={() => navigation.navigate('AdminNotifications')}
-                    >
-                        <Text style={styles.cardTitle}>🔔 Notifications</Text>
-                        <Text style={styles.cardDesc}>View and manage system alerts</Text>
-                        {notifications > 0 && <Text style={styles.actionBadge}>{notifications} new</Text>}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.card, { backgroundColor: '#ffe0b2' }]}
-                        onPress={() => navigation.navigate('AdminProfile')}
-                    >
-                        <Text style={styles.cardTitle}>👤 Profile & Logs</Text>
-                        <Text style={styles.cardDesc}>View admin details and audit logs</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                        <Text style={styles.logoutText}>🚪 Logout</Text>
-                    </TouchableOpacity>
-                </>
-            ) : null}
-        </ScrollView>
+                        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+                            <Text style={styles.logoutText}>Logout</Text>
+                        </TouchableOpacity>
+                    </>
+                ) : null}
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        padding: 15,
-        backgroundColor: COLORS.white,
-        flexGrow: 1,
+        flex: 1,
+        backgroundColor: '#f3f4f6', // Matching web background
     },
     header: {
-        marginBottom: 20,
-        marginTop: 10,
+        backgroundColor: COLORS.primary, // Fallback if gradient not available
+        paddingTop: 50,
+        paddingBottom: 20,
+        paddingHorizontal: 20,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 10,
     },
-    headerTop: {
+    headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
     },
     welcomeText: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: 'white',
     },
     subText: {
         fontSize: 14,
-        color: COLORS.textLight,
-        marginTop: 2,
+        color: 'rgba(255,255,255,0.8)',
+        marginTop: 4,
     },
     notificationBadge: {
-        backgroundColor: '#f44336',
-        borderRadius: 50,
-        width: 40,
-        height: 40,
+        backgroundColor: COLORS.error,
+        borderRadius: 20,
+        width: 30,
+        height: 30,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'white',
     },
     badgeText: {
-        color: COLORS.white,
+        color: 'white',
         fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: 12,
     },
-    loader: {
-        marginTop: 50,
+    scrollContent: {
+        padding: 20,
     },
-    metricsRow: {
+    metricsGrid: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
-        marginBottom: 12,
+        marginBottom: 20,
     },
     metricBox: {
-        flex: 1,
+        width: '48%',
+        backgroundColor: 'white',
         padding: 15,
         borderRadius: 12,
-        marginHorizontal: 6,
+        marginBottom: 15,
         alignItems: 'center',
-        elevation: 2,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     metricLabel: {
-        fontSize: 12,
+        fontSize: 10,
         color: COLORS.textLight,
+        fontWeight: 'bold',
         marginBottom: 5,
-        textAlign: 'center',
+        letterSpacing: 1,
     },
     metricValue: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
         color: COLORS.primary,
     },
     card: {
-        padding: 18,
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 12,
+        marginBottom: 20,
+        alignItems: 'center',
+        elevation: 2,
+    },
+    cardLabel: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: 5,
+        textTransform: 'uppercase',
+    },
+    largeValue: {
+        fontSize: 32,
+        fontWeight: 'bold',
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: 15,
+    },
+    navCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: 15,
         borderRadius: 12,
         marginBottom: 12,
-        elevation: 2,
-        shadowColor: '#000',
+        elevation: 2, // Android shadow
+        shadowColor: "#000", // iOS shadow
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowRadius: 4,
+    },
+    iconBox: {
+        width: 50,
+        height: 50,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
     },
     cardTitle: {
         fontSize: 16,
         fontWeight: 'bold',
         color: COLORS.text,
-        marginBottom: 5,
     },
     cardDesc: {
-        fontSize: 13,
+        fontSize: 12,
         color: COLORS.textLight,
-        marginBottom: 10,
+        marginTop: 2,
     },
-    actionBadge: {
+    badgeContainer: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 12,
+    },
+    badgeTextSmall: {
+        color: 'white',
         fontSize: 12,
         fontWeight: 'bold',
-        color: COLORS.primary,
-        paddingTop: 5,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.primary,
-        marginTop: 15,
-        marginBottom: 10,
-        paddingHorizontal: 5,
-    },
-    largeValue: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginTop: 5,
-    },
-    cardLabel: {
-        fontSize: 14,
-        color: COLORS.text,
-        marginBottom: 10,
     },
     logoutButton: {
-        padding: 15,
-        backgroundColor: '#ffcdd2',
-        borderRadius: 10,
-        alignItems: 'center',
         marginTop: 20,
+        padding: 15,
+        backgroundColor: '#ffe4e6',
+        borderRadius: 12,
+        alignItems: 'center',
         marginBottom: 30,
     },
     logoutText: {
-        color: '#c62828',
+        color: COLORS.error,
         fontWeight: 'bold',
         fontSize: 16,
     },
+    loader: {
+        marginTop: 50,
+    }
 });
 
 export default AdminHomeScreen;

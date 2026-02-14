@@ -5,24 +5,24 @@ const Sidebar = ({ isOpen, onToggle, userInfo }) => {
     const location = useLocation();
 
     const menuItems = [
-        { path: '/dashboard', label: '📊 Dashboard', icon: '📈' },
-        { path: '/found-items', label: '📦 Found Items', icon: '📦' },
-        { path: '/lost-items', label: '🔍 Lost Items', icon: '🔍' },
-        { path: '/claims', label: '⚖️ Claims', icon: '⚖️' },
-        { path: '/profile', label: '👤 Profile', icon: '👤' },
+        { path: '/dashboard', label: 'Dashboard' },
+        { path: '/found-items', label: 'Found Items' },
+        { path: '/lost-items', label: 'Lost Items' },
+        { path: '/claims', label: 'Claims' },
+        { path: '/profile', label: 'Profile' },
     ];
 
     return (
         <div className={`sidebar ${!isOpen ? 'collapsed' : ''}`}>
-            <div style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid #404060' }}>
-                <div style={{ fontSize: '30px', marginBottom: '10px' }}>🏫</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Student Care Admin</div>
+            <div className="sidebar-header">
+                <div style={{ fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}>ADMIN CONSOLE</div>
+                <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '5px' }}>REC STUDENT CARE</div>
             </div>
             <ul className="sidebar-menu">
                 {menuItems.map(item => (
                     <li key={item.path} className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}>
                         <Link to={item.path} className="sidebar-link">
-                            <span>{item.icon} {item.label}</span>
+                            <span>{item.label}</span>
                         </Link>
                     </li>
                 ))}
