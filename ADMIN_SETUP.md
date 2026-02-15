@@ -44,7 +44,7 @@ userInfo?.roles?.includes('ADMIN') ? <AdminNavigator /> : <UserNavigator />
 **✓ Admin User Created in MongoDB**
 
 ```
-Email:    admin@rajalakshmi.edu.in
+Email:    admin@rec.edu.in
 Password: admin123
 Role:     ADMIN
 Name:     Student Care Admin
@@ -61,7 +61,7 @@ expo start
 ```
 
 ### 2. Login with Admin Credentials
-- Email: `admin@rajalakshmi.edu.in`
+- Email: `admin@rec.edu.in`
 - Password: `admin123`
 
 ### 3. App Automatically Routes to Admin Dashboard
@@ -91,3 +91,7 @@ All require Bearer token with ADMIN role:
 ✅ Backend API endpoints ready
 
 **Admin panel is ready to use!**
+
+---
+> **Disclaimer**: This project is made by a REC student for the **Design Thinking and Innovation (DTI)** project for **Rajalakshmi Engineering College (REC)**. It is **not** officially made for the College and it may have a high chance in a future to publish in a real time with the college permission.
+

@@ -139,6 +139,19 @@ const LostItemsViewer = () => {
                                     </span>
                                 </div>
 
+                                {(item.imageUrl || item.image_url) && (
+                                    <div style={{ width: '100%', height: '160px', marginBottom: '10px', overflow: 'hidden', borderRadius: '4px', backgroundColor: '#f0f0f0' }}>
+                                        <img
+                                            src={`${API_BASE_URL.replace('/api', '')}/${item.imageUrl || item.image_url}`}
+                                            alt={item.category}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            onError={(e) => {
+                                                e.target.parentNode.style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 <h3 style={{ margin: '10px 0' }}>{item.category}</h3>
                                 <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
                                     <strong>Description:</strong> {item.description}
@@ -210,10 +223,10 @@ const LostItemsViewer = () => {
                             </span>
                         </div>
 
-                        {selectedItem.imageUrl && (
+                        {(selectedItem.imageUrl || selectedItem.image_url) && (
                             <div style={{ marginBottom: '20px' }}>
                                 <img
-                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl}`}
+                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl || selectedItem.image_url}`}
                                     alt={selectedItem.category}
                                     style={{
                                         maxWidth: '100%',

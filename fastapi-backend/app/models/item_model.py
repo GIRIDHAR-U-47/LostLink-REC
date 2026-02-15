@@ -10,8 +10,8 @@ class ItemBase(BaseModel):
     category: str
     description: Optional[str] = None
     location: str
-    date_time: datetime = Field(alias="dateTime")
-    image_url: Optional[str] = Field(None, alias="imageUrl")
+    date_time: datetime = Field(alias="dateTime", validation_alias="dateTime", serialization_alias="dateTime")
+    image_url: Optional[str] = Field(None, alias="imageUrl", validation_alias="imageUrl", serialization_alias="imageUrl")
     status: ItemStatus = ItemStatus.OPEN
     # Admin fields
     storage_location: Optional[str] = None  # e.g., "Rack A, Shelf 3"

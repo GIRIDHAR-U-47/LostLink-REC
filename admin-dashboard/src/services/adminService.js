@@ -22,7 +22,10 @@ const adminService = {
 
     // Notifications
     getNotifications: (unreadOnly = false) => api.get(`/admin/notifications?unread_only=${unreadOnly}`),
-    markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`)
+    markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
+
+    // Helpers
+    getBaseUrl: () => 'http://localhost:8080'
 };
 
 export default adminService;

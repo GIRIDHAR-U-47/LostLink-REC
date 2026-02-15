@@ -113,6 +113,7 @@ const FoundItemsManagement = () => {
                     <table>
                         <thead>
                             <tr>
+                                <th>Thumbnail</th>
                                 <th>Category</th>
                                 <th>Description</th>
                                 <th>Location Found</th>
@@ -125,6 +126,20 @@ const FoundItemsManagement = () => {
                         <tbody>
                             {items.map(item => (
                                 <tr key={item.id || item._id}>
+                                    <td>
+                                        {(item.imageUrl || item.image_url) ? (
+                                            <img
+                                                src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
+                                                alt={item.category}
+                                                style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                                                onError={(e) => {
+                                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50"%3E%3Crect fill="%23f0f0f0" width="50" height="50"/%3E%3Ctext x="25" y="25" text-anchor="middle" dy=".3em" fill="%23999" font-size="8" font-family="sans-serif"%3ENo Img%3C/text%3E%3C/svg%3E';
+                                                }}
+                                            />
+                                        ) : (
+                                            <div style={{ width: '50px', height: '50px', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '10px', color: '#999' }}>No Img</div>
+                                        )}
+                                    </td>
                                     <td><strong>{item.category}</strong></td>
                                     <td>{item.description}</td>
                                     <td>{item.location}</td>
@@ -136,10 +151,12 @@ const FoundItemsManagement = () => {
                                     <td>{item.storage_location || 'Not assigned'}</td>
                                     <td>{new Date(item.dateTime).toLocaleDateString()}</td>
                                     <td>
-                                        <button className="btn" style={{ marginRight: '5px', fontSize: '12px', padding: '5px 10px' }}
-                                            onClick={() => setSelectedItem(item)}>
-                                            Assign Storage
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                            <button className="btn" style={{ fontSize: '12px', padding: '5px 10px' }}
+                                                onClick={() => setSelectedItem(item)}>
+                                                Assign Storage
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -148,7 +165,7 @@ const FoundItemsManagement = () => {
                 </div>
             )}
 
-            {/* Storage Assignment Modal */}
+            {/* Item Detail & Storage Modal */}
             {selectedItem && (
                 <div style={{
                     position: 'fixed',
@@ -160,18 +177,64 @@ const FoundItemsManagement = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    zIndex: 1000
+                    zIndex: 1000,
+                    overflowY: 'auto',
+                    padding: '20px'
                 }}>
                     <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '8px',
-                        maxWidth: '500px',
-                        width: '90%'
+                        maxWidth: '600px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
                     }}>
-                        <h2>Assign Storage Location</h2>
-                        <p style={{ color: '#666', marginBottom: '20px' }}>Item: {selectedItem.category}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ margin: 0 }}>Item Details</h2>
+                            <button className="btn btn-danger" onClick={() => {
+                                setSelectedItem(null);
+                                setStorageLocation('');
+                                setRemarks('');
+                            }}>✕</button>
+                        </div>
 
+                        {(selectedItem.imageUrl || selectedItem.image_url) && (
+                            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                                <img
+                                    src={`${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`}
+                                    alt={selectedItem.category}
+                                    style={{
+                                        maxWidth: '100%',
+                                        maxHeight: '300px',
+                                        objectFit: 'contain',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    }}
+                                    onError={(e) => {
+                                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+                            <div>
+                                <p><strong>Category:</strong> {selectedItem.category}</p>
+                                <p><strong>Location Found:</strong> {selectedItem.location}</p>
+                            </div>
+                            <div>
+                                <p><strong>Status:</strong> {selectedItem.status || 'PENDING'}</p>
+                                <p><strong>Date Reported:</strong> {new Date(selectedItem.dateTime).toLocaleDateString()}</p>
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }}>
+                                <p><strong>Description:</strong> {selectedItem.description}</p>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <h3 style={{ marginTop: '20px' }}>Assign Storage Location</h3>
                         <div className="form-group">
                             <label>Storage Location (e.g., Rack A, Shelf 3)</label>
                             <input
@@ -179,6 +242,7 @@ const FoundItemsManagement = () => {
                                 value={storageLocation}
                                 onChange={(e) => setStorageLocation(e.target.value)}
                                 placeholder="Enter storage location"
+                                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
                             />
                         </div>
 
@@ -189,15 +253,16 @@ const FoundItemsManagement = () => {
                                 onChange={(e) => setRemarks(e.target.value)}
                                 placeholder="Optional remarks..."
                                 rows="3"
+                                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
                             />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button className="btn btn-success" onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}>
-                                Confirm
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                            <button className="btn btn-success" style={{ flex: 1 }} onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}>
+                                Update Item
                             </button>
-                            <button className="btn btn-danger" onClick={() => setSelectedItem(null)}>
-                                Cancel
+                            <button className="btn" style={{ flex: 1 }} onClick={() => setSelectedItem(null)}>
+                                Close
                             </button>
                         </div>
                     </div>

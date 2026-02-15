@@ -156,9 +156,9 @@ const ClaimsManagement = () => {
                             <h4>Item Details</h4>
                             <p><strong>Category:</strong> {selectedClaim.item?.category || selectedClaim.category || 'N/A'}</p>
                             <p><strong>Description:</strong> {selectedClaim.item?.description || selectedClaim.description || 'N/A'}</p>
-                            {(selectedClaim.item?.image_url || selectedClaim.imageUrl) && (
+                            {(selectedClaim.item?.image_url || selectedClaim.item?.imageUrl || selectedClaim.imageUrl || selectedClaim.image_url) && (
                                 <img
-                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedClaim.item?.image_url || selectedClaim.imageUrl}`}
+                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedClaim.item?.image_url || selectedClaim.item?.imageUrl || selectedClaim.imageUrl || selectedClaim.image_url}`}
                                     alt={selectedClaim.item?.category}
                                     style={{
                                         maxWidth: '100%',

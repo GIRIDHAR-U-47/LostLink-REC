@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { COLORS } from '../../constants/theme';
 import adminAPI from '../../services/adminApi';
@@ -33,19 +33,23 @@ const AdminHomeScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            {/* Header Gradient */}
+        <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
-                <View style={styles.headerContent}>
+                <View style={styles.logoRow}>
                     <View>
-                        <Text style={styles.welcomeText}>Admin Dashboard</Text>
-                        <Text style={styles.subText}>{userInfo?.name} | Student Care</Text>
+                        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+                        <Text style={styles.headerSubtitle}>{userInfo?.name} | Student Care</Text>
                     </View>
+                </View>
+                <View style={styles.headerActions}>
                     {notifications > 0 && (
                         <View style={styles.notificationBadge}>
                             <Text style={styles.badgeText}>{notifications}</Text>
                         </View>
                     )}
+                    <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+                        <Text style={styles.logoutIcon}>➜</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -128,48 +132,44 @@ const AdminHomeScreen = ({ navigation }) => {
                             </View>
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                            <Text style={styles.logoutText}>Logout</Text>
-                        </TouchableOpacity>
+                        {/* Remove bottom logout as it's now in header */}
                     </>
                 ) : null}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
-        backgroundColor: '#f3f4f6', // Matching web background
+        backgroundColor: COLORS.primary,
     },
     header: {
-        backgroundColor: COLORS.primary, // Fallback if gradient not available
-        paddingTop: 50,
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        elevation: 10,
-    },
-    headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 50,
+        paddingBottom: 15,
+        backgroundColor: COLORS.primary,
     },
-    welcomeText: {
-        fontSize: 24,
+    logoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerTitle: {
+        color: COLORS.white,
+        fontSize: 18,
         fontWeight: 'bold',
-        color: 'white',
     },
-    subText: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
-        marginTop: 4,
+    headerSubtitle: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
     },
     notificationBadge: {
         backgroundColor: COLORS.error,
@@ -186,8 +186,28 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 12,
     },
+    logoutBtn: {
+        width: 40,
+        height: 40,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 10,
+    },
+    logoutIcon: {
+        color: COLORS.white,
+        fontSize: 20,
+    },
     scrollContent: {
-        padding: 20,
+        backgroundColor: '#f3f4f6', // Matching web background
+        flexGrow: 1,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        paddingHorizontal: 20,
+        paddingTop: 30,
+        marginTop: 10,
+        paddingBottom: 40,
     },
     metricsGrid: {
         flexDirection: 'row',
@@ -286,19 +306,6 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 12,
         fontWeight: 'bold',
-    },
-    logoutButton: {
-        marginTop: 20,
-        padding: 15,
-        backgroundColor: '#ffe4e6',
-        borderRadius: 12,
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    logoutText: {
-        color: COLORS.error,
-        fontWeight: 'bold',
-        fontSize: 16,
     },
     loader: {
         marginTop: 50,
