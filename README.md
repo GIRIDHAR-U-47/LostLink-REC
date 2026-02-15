@@ -3,16 +3,16 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
 <div align="center">
 
-<a href="https://github.com/YourUsername/LostLink-REC/releases">
-  <img src="https://img.shields.io/github/downloads/YourUsername/LostLink-REC/total?style=for-the-badge&logo=github&label=Downloads&color=3DDC84" alt="Total Downloads"/>
+<a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/releases">
+  <img src="https://img.shields.io/github/downloads/GIRIDHAR-U-47/LostLink-REC/total?style=for-the-badge&logo=github&label=Downloads&color=3DDC84" alt="Total Downloads"/>
 </a>
-<a href="https://github.com/YourUsername/LostLink-REC/releases/latest">
-  <img src="https://img.shields.io/github/v/release/YourUsername/LostLink-REC?style=for-the-badge&logo=react&logoColor=white&label=Latest&color=007AFF" alt="Latest Version"/>
+<a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/releases/latest">
+  <img src="https://img.shields.io/github/v/release/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=react&logoColor=white&label=Latest&color=007AFF" alt="Latest Version"/>
 </a>
-<a href="https://github.com/YourUsername/LostLink-REC/stargazers">
-  <img src="https://img.shields.io/github/stars/YourUsername/LostLink-REC?style=for-the-badge&logo=github&color=FFD700" alt="Stars"/>
+<a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/stargazers">
+  <img src="https://img.shields.io/github/stars/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=github&color=FFD700" alt="Stars"/>
 </a>
-<a href="https://github.com/YourUsername/LostLink-REC/blob/main/LICENSE">
+<a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/blob/main/LICENSE">
   <img src="https://img.shields.io/badge/License-MIT-orange?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"/>
 </a>
 
@@ -85,7 +85,7 @@ You can set up the project automatically using the provided script (Windows) or 
 
 ### 📥 0. Clone the Repository
 ```bash
-git clone https://github.com/YourUsername/LostLink-REC.git
+git clone https://github.com/GIRIDHAR-U-47/LostLink-REC.git
 cd LostLink-REC
 ```
 
