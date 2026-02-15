@@ -173,8 +173,8 @@ This is the most critical step for mobile device connection.
 | Role | Email | Password |
 | :--- | :--- | :--- |
 | **Admin** | `admin@rec.edu.in` | `admin123` |
-| **Student** | `john@rec.edu.in` | `student123` |
-| **Student** | `jane@rec.edu.in` | `student123` |
+| **Student** | `register` | 
+
 
 ---
 
