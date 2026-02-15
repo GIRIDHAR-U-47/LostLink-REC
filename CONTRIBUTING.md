@@ -44,4 +44,12 @@ First off, thank you for considering contributing to REC LostLink! It's people l
 Thank you for being part of the REC LostLink community! 🎓
 
 ---
-> **Disclaimer**: This project is made by a REC student for the **Design Thinking and Innovation (DTI)** project. It is **not** officially made for the College and it may have a high chance in a future to publish in a real time with the college permission.
+> [!IMPORTANT]
+> **Disclaimer**: This project is developed by a student of Rajalakshmi Engineering College as part of the **Design Thinking and Innovation (DTI)** academic coursework.
+>
+> This application is a student initiative and is **not** an official product of the college. It has been created solely for educational, research, and prototype purposes.
+>
+> Any future real-world deployment within the campus will be subject to formal approval and authorization from the college administration.
+>
+> The project does not claim ownership of institutional processes, branding, or authority and is intended only to demonstrate an innovative solution to a campus problem.
+

@@ -1,12 +1,36 @@
 # REC LostLink 🔍
 Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
+<div align="center">
+
+<a href="https://github.com/YourUsername/LostLink-REC/releases">
+  <img src="https://img.shields.io/github/downloads/YourUsername/LostLink-REC/total?style=for-the-badge&logo=github&label=Downloads&color=3DDC84" alt="Total Downloads"/>
+</a>
+<a href="https://github.com/YourUsername/LostLink-REC/releases/latest">
+  <img src="https://img.shields.io/github/v/release/YourUsername/LostLink-REC?style=for-the-badge&logo=react&logoColor=white&label=Latest&color=007AFF" alt="Latest Version"/>
+</a>
+<a href="https://github.com/YourUsername/LostLink-REC/stargazers">
+  <img src="https://img.shields.io/github/stars/YourUsername/LostLink-REC?style=for-the-badge&logo=github&color=FFD700" alt="Stars"/>
+</a>
+<a href="https://github.com/YourUsername/LostLink-REC/blob/main/LICENSE">
+  <img src="https://img.shields.io/badge/License-MIT-orange?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"/>
+</a>
+
+</div>
+
 ## 🚀 Overview
 **REC LostLink** is a comprehensive solution designed to streamline the lost and found process within the REC campus. It eliminates the manual hassle of tracking lost items by providing a centralized, secure, and automated platform for students and administrators.
 
 
 > [!IMPORTANT]
-> **Disclaimer**: This project is made by a REC student for the **Design Thinking and Innovation (DTI)** project for **Rajalakshmi Engineering College (REC)**. It is **not** officially made for the College and it may have a high chance in a future to publish in a real time with the college permission.
+> **Disclaimer**: This project is developed by a student of Rajalakshmi Engineering College as part of the **Design Thinking and Innovation (DTI)** academic coursework.
+>
+> This application is a student initiative and is **not** an official product of the college. It has been created solely for educational, research, and prototype purposes.
+>
+> Any future real-world deployment within the campus will be subject to formal approval and authorization from the college administration.
+>
+> The project does not claim ownership of institutional processes, branding, or authority and is intended only to demonstrate an innovative solution to a campus problem.
+
 
 ---
 
@@ -214,5 +238,13 @@ Visuals of the interface can be found in the `docs/assets` directory. Key highli
 ## 📄 License
 Project developed for **Rajalakshmi Engineering College**. Distributed under the MIT License.
 
-> **Note**: This is a student project for DTI (Design Thinking and Innovation). Not an official college product yet.
+> [!IMPORTANT]
+> **Disclaimer**: This project is developed by a student of Rajalakshmi Engineering College as part of the **Design Thinking and Innovation (DTI)** academic coursework.
+>
+> This application is a student initiative and is **not** an official product of the college. It has been created solely for educational, research, and prototype purposes.
+>
+> Any future real-world deployment within the campus will be subject to formal approval and authorization from the college administration.
+>
+> The project does not claim ownership of institutional processes, branding, or authority and is intended only to demonstrate an innovative solution to a campus problem.
+
 
