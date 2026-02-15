@@ -14,7 +14,7 @@ The following versions of REC LostLink are currently being supported with securi
 We take the security of the REC LostLink ecosystem seriously. If you discover a security vulnerability within this project, please follow the steps below:
 
 1.  **Do not** open a public GitHub issue.
-2.  Email the details of the vulnerability to **admin@rec.edu.in**.
+2.  Email the details of the vulnerability to **giridharuppili2004@gmail.com**.
 3.  Include a detailed description of the vulnerability, steps to reproduce, and potential impact.
 
 Once we receive your report:
