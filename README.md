@@ -6,9 +6,6 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 <a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/releases">
   <img src="https://img.shields.io/github/downloads/GIRIDHAR-U-47/LostLink-REC/total?style=for-the-badge&logo=github&label=Downloads&color=3DDC84" alt="Total Downloads"/>
 </a>
-<a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/releases/latest">
-  <img src="https://img.shields.io/github/v/release/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=react&logoColor=white&label=Latest&color=007AFF" alt="Latest Version"/>
-</a>
 <a href="https://github.com/GIRIDHAR-U-47/LostLink-REC/stargazers">
   <img src="https://img.shields.io/github/stars/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=github&color=FFD700" alt="Stars"/>
 </a>
