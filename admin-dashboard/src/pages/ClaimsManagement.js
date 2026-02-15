@@ -16,9 +16,16 @@ const ClaimsManagement = () => {
         setLoading(true);
         try {
             const response = await adminService.getClaimsByStatus(filters.status);
+            console.log('Claims API Response:', response.data);
             setClaims(response.data || []);
         } catch (error) {
-            console.log('Error fetching claims:', error);
+            console.error('Network Error Details:', {
+                message: error.message,
+                config: error.config,
+                url: error.config?.url,
+                headers: error.config?.headers
+            });
+            alert('Claims Fetch Failed: ' + error.message + '\n\nPlease check if the backend is running and you have internet/local connection.');
         } finally {
             setLoading(false);
         }
@@ -94,14 +101,15 @@ const ClaimsManagement = () => {
                             {claims.map(claim => (
                                 <tr key={claim.id || claim._id}>
                                     <td>
-                                        <div className="item-name">{claim.item_name}</div>
-                                        <div className="item-id">ID: {claim.item_id}</div>
+                                        <div className="item-name">{claim.item?.category || 'Unknown Item'}</div>
+                                        <div className="item-id">ID: {claim.item?.id || claim.item?._id}</div>
                                     </td>
                                     <td>
-                                        <div className="claimant-name">{claim.user_name}</div>
-                                        <div className="claimant-email">{claim.user_email}</div>
+                                        <div className="claimant-name">{claim.claimant?.name || 'Unknown User'}</div>
+                                        <div className="claimant-email">{claim.claimant?.email}</div>
+                                        {claim.claimant?.registerNumber && <div style={{ fontSize: '11px', color: '#666' }}>{claim.claimant.registerNumber}</div>}
                                     </td>
-                                    <td>{new Date(claim.claim_date).toLocaleDateString()}</td>
+                                    <td>{new Date(claim.submissionDate).toLocaleDateString()}</td>
                                     <td>
                                         <span className={`badge badge-${claim.status.toLowerCase()}`}
                                             style={{ backgroundColor: getStatusColor(claim.status) }}>
@@ -154,11 +162,11 @@ const ClaimsManagement = () => {
                     }}>
                         <div style={{ marginBottom: '20px' }}>
                             <h4>Item Details</h4>
-                            <p><strong>Category:</strong> {selectedClaim.item?.category || selectedClaim.category || 'N/A'}</p>
-                            <p><strong>Description:</strong> {selectedClaim.item?.description || selectedClaim.description || 'N/A'}</p>
-                            {(selectedClaim.item?.image_url || selectedClaim.item?.imageUrl || selectedClaim.imageUrl || selectedClaim.image_url) && (
+                            <p><strong>Category:</strong> {selectedClaim.item?.category || 'N/A'}</p>
+                            <p><strong>Description:</strong> {selectedClaim.item?.description || 'N/A'}</p>
+                            {(selectedClaim.item?.imageUrl || selectedClaim.item?.image_url) && (
                                 <img
-                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedClaim.item?.image_url || selectedClaim.item?.imageUrl || selectedClaim.imageUrl || selectedClaim.image_url}`}
+                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedClaim.item?.imageUrl || selectedClaim.item?.image_url}`}
                                     alt={selectedClaim.item?.category}
                                     style={{
                                         maxWidth: '100%',
@@ -176,16 +184,32 @@ const ClaimsManagement = () => {
 
                         <div style={{ marginBottom: '20px' }}>
                             <h4>Claimant Information</h4>
-                            <p><strong>Name:</strong> {selectedClaim.claimant?.name || selectedClaim.claimantName || 'N/A'}</p>
-                            <p><strong>Email:</strong> {selectedClaim.claimant?.email || selectedClaim.claimantEmail || 'N/A'}</p>
-                            <p><strong>Phone:</strong> {selectedClaim.claimant?.phone || selectedClaim.claimantPhone || 'N/A'}</p>
-                            <p><strong>Hostel/Room:</strong> {selectedClaim.claimant?.department || selectedClaim.hostel || 'N/A'}</p>
+                            <p><strong>Name:</strong> {selectedClaim.claimant?.name || 'N/A'}</p>
+                            <p><strong>Email:</strong> {selectedClaim.claimant?.email || 'N/A'}</p>
+                            <p><strong>Register No:</strong> {selectedClaim.claimant?.registerNumber || 'N/A'}</p>
                         </div>
 
                         <div style={{ marginBottom: '20px' }}>
                             <h4>Verification Information</h4>
-                            <p><strong>Proof of Ownership:</strong> {selectedClaim.proofOfOwnership || 'Not provided'}</p>
-                            <p><strong>Item Identifiers:</strong> {selectedClaim.identifierDetails || 'Not provided'}</p>
+                            <p><strong>Description/Proof:</strong> {selectedClaim.verificationDetails || 'Not provided'}</p>
+
+                            {selectedClaim.proofImageUrl && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <strong>Proof Image:</strong>
+                                    <img
+                                        src={`${API_BASE_URL.replace('/api', '')}/${selectedClaim.proofImageUrl}`}
+                                        alt="Proof"
+                                        style={{
+                                            maxWidth: '100%',
+                                            maxHeight: '300px',
+                                            objectFit: 'contain',
+                                            borderRadius: '4px',
+                                            marginTop: '5px',
+                                            border: '1px solid #ddd'
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="form-group">

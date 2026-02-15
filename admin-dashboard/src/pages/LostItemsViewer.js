@@ -160,7 +160,7 @@ const LostItemsViewer = () => {
                                     <strong>Location:</strong> {item.location}
                                 </p>
                                 <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                                    <strong>Reporter:</strong> {item.reporterName || 'Anonymous'}
+                                    <strong>Reporter:</strong> {item.user?.name || item.reporterName || 'Anonymous'}
                                 </p>
 
                                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
@@ -252,10 +252,9 @@ const LostItemsViewer = () => {
 
                             <div>
                                 <h4>Reporter Information</h4>
-                                <p><strong>Name:</strong> {selectedItem.reporterName || 'Anonymous'}</p>
-                                <p><strong>Email:</strong> {selectedItem.reporterEmail || 'Not provided'}</p>
-                                <p><strong>Phone:</strong> {selectedItem.reporterPhone || 'Not provided'}</p>
-                                <p><strong>Hostel:</strong> {selectedItem.hostel || 'Not provided'}</p>
+                                <p><strong>Name:</strong> {selectedItem.user?.name || selectedItem.reporterName || 'Anonymous'}</p>
+                                <p><strong>Register No:</strong> {selectedItem.user?.registerNumber || 'Not provided'}</p>
+                                <p><strong>Email:</strong> {selectedItem.user?.email || selectedItem.reporterEmail || 'Not provided'}</p>
                             </div>
                         </div>
 

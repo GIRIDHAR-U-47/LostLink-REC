@@ -210,6 +210,12 @@ const Dashboard = () => {
                             <td><strong>Storage</strong></td>
                             <td><span className="badge badge-approved">Available</span></td>
                         </tr>
+                        {stats._debug && (
+                            <tr>
+                                <td><strong>DB Claims Count</strong></td>
+                                <td><span className="badge badge-pending">{stats._debug.total_claims_in_db}</span></td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -15,6 +15,7 @@ import ReportLostScreen from '../screens/user/ReportLostScreen';
 import ReportFoundScreen from '../screens/user/ReportFoundScreen';
 import FoundItemsScreen from '../screens/user/FoundItemsScreen';
 import MyRequestsScreen from '../screens/user/MyRequestsScreen';
+import ClaimItemScreen from '../screens/user/ClaimItemScreen';
 
 // Admin screens
 import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
@@ -43,7 +44,7 @@ const UserNavigator = () => (
         <UserStack.Screen name="ReportFound" component={ReportFoundScreen} />
         <UserStack.Screen name="FoundItems" component={FoundItemsScreen} />
         <UserStack.Screen name="MyRequests" component={MyRequestsScreen} />
-        {/* Add more user screens */}
+        <UserStack.Screen name="ClaimItem" component={ClaimItemScreen} options={{ headerShown: true, title: 'Claim Item' }} />
     </UserStack.Navigator>
 );
 

@@ -18,21 +18,19 @@ const FoundItemsManagement = () => {
     const fetchItems = useCallback(async () => {
         setLoading(true);
         try {
-            const params = {
-                query: searchQuery,
-                category: filters.category,
-                status: filters.status,
-                item_type: 'FOUND'
-            };
-
-            const response = await adminService.searchItems(params);
+            console.log('Fetching found items...');
+            const response = await adminService.searchItems({
+                item_type: 'FOUND',
+                status: filters.status
+            });
+            console.log('Found items response:', response.data);
             setItems(response.data || []);
         } catch (error) {
-            console.log('Error fetching items:', error);
+            console.error('Error fetching found items:', error);
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, filters]);
+    }, [filters.status]);
 
     useEffect(() => {
         fetchItems();
@@ -47,10 +45,18 @@ const FoundItemsManagement = () => {
         try {
             await adminService.assignStorage(itemId, storageLocation, remarks);
 
-            alert('Storage location assigned successfully');
+            // Optimistic UI Update: Update the local state immediately
+            setItems(currentItems => currentItems.map(item =>
+                (item.id === itemId || item._id === itemId)
+                    ? { ...item, storage_location: storageLocation, admin_remarks: remarks, status: 'AVAILABLE' }
+                    : item
+            ));
+
             setStorageLocation('');
             setRemarks('');
             setSelectedItem(null);
+
+            // Background refresh
             fetchItems();
         } catch (error) {
             alert('Error: ' + (error.response?.data?.detail || error.message));

@@ -12,7 +12,7 @@ const adminService = {
         api.put(`/admin/items/${itemId}/assign-storage`, { storage_location: storageLocation, admin_remarks: adminRemarks }),
 
     // Claims Management
-    getClaimsByStatus: (status) => api.get(`/claims/status?status=${status}`),
+    getClaimsByStatus: (status) => api.get('/claims/status', { params: status ? { status } : {} }),
     verifyClaim: (claimId, status) => api.put(`/claims/${claimId}/verify?status=${status}`),
 
     // Profile & Logs
@@ -25,7 +25,7 @@ const adminService = {
     markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
 
     // Helpers
-    getBaseUrl: () => 'http://localhost:8080'
+    getBaseUrl: () => 'http://127.0.0.1:8080'
 };
 
 export default adminService;

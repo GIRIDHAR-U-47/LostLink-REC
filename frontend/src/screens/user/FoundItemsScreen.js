@@ -37,7 +37,7 @@ const FoundItemsScreen = ({ navigation }) => {
             </View>
             {item.imageUrl ? (
                 <Image
-                    source={{ uri: `http://10.234.72.182:8080/${item.imageUrl}` }}
+                    source={{ uri: `${api.defaults.baseURL.replace('/api', '')}/${item.imageUrl}` }}
                     style={styles.itemImage}
                     resizeMode="cover"
                 />
@@ -45,10 +45,9 @@ const FoundItemsScreen = ({ navigation }) => {
             <Text style={styles.location}>📍 {item.location}</Text>
             <Text style={styles.description}>{item.description}</Text>
 
-            {/* Assuming we might want to Claim it */}
             <TouchableOpacity
                 style={styles.claimButton}
-                onPress={() => navigation.navigate('ClaimItem', { item })} // To be implemented
+                onPress={() => navigation.navigate('ClaimItem', { item })}
             >
                 <Text style={styles.claimButtonText}>This is mine!</Text>
             </TouchableOpacity>

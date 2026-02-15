@@ -62,8 +62,11 @@ async def report_item(
 
 @router.get("/found", response_model=List[ItemResponse])
 async def get_found_items(db = Depends(get_database)):
-    # Get all FOUND items with PENDING status (not yet claimed)
-    cursor = db["items"].find({"type": "FOUND", "status": "PENDING"}).sort("dateTime", -1)
+    # Get all FOUND items with PENDING or AVAILABLE status (not yet claimed)
+    cursor = db["items"].find({
+        "type": "FOUND", 
+        "status": {"$in": ["PENDING", "AVAILABLE"]}
+    }).sort("dateTime", -1)
     items = await cursor.to_list(length=100)
     
     results = []

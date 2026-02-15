@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from typing import List, Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
+from pydantic import BaseModel
 from app.core.database import get_database
 from app.models.enums import Role, ItemStatus, ItemType
 from app.models.user_model import UserResponse
@@ -11,6 +12,11 @@ from app.models.notification_model import Notification
 from app.api.deps import get_current_user
 
 router = APIRouter()
+
+class StorageAssignment(BaseModel):
+    storage_location: str
+    admin_remarks: Optional[str] = None
+
 
 # ============ DASHBOARD STATISTICS ============
 @router.get("/stats/dashboard")
@@ -52,7 +58,11 @@ async def get_dashboard_stats(
         "available_items": available_items,
         "returned_today": returned_today,
         "high_risk_items": high_risk,
-        "pending_claims": pending_claims
+        "pending_claims": pending_claims,
+        "_debug": {
+            "total_claims_in_db": await claims_col.count_documents({}),
+            "total_items_in_db": await items_col.count_documents({})
+        }
     }
 
 @router.get("/stats/category-breakdown")
@@ -274,8 +284,7 @@ async def create_notification(
 @router.put("/items/{item_id}/assign-storage")
 async def assign_storage_location(
     item_id: str,
-    storage_location: str,
-    admin_remarks: Optional[str] = None,
+    assignment: StorageAssignment,
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
@@ -284,13 +293,15 @@ async def assign_storage_location(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     update_data = {
-        "storage_location": storage_location,
+        "storage_location": assignment.storage_location,
         "verified_by": str(current_user.id),
-        "verified_at": datetime.utcnow()
+        "verified_at": datetime.utcnow(),
+        "status": "AVAILABLE"  # Automatically verified
     }
     
-    if admin_remarks:
-        update_data["admin_remarks"] = admin_remarks
+    if assignment.admin_remarks:
+        update_data["admin_remarks"] = assignment.admin_remarks
+
     
     result = await db["items"].update_one(
         {"_id": ObjectId(item_id)},
@@ -309,7 +320,7 @@ async def assign_storage_location(
         "action": "STORAGE_ASSIGNED",
         "target_type": "ITEM",
         "target_id": item_id,
-        "details": {"storage_location": storage_location},
+        "details": {"storage_location": assignment.storage_location},
         "timestamp": datetime.utcnow()
     })
     
