@@ -20,8 +20,10 @@ app = FastAPI(title="REC LostLink API", version="1.0.0", lifespan=lifespan)
 
 # CORS Middleware
 origins = [
-    "http://localhost:3000", # Access from React/React Native web
-    "*" # Allow all for development ease with React Native (Expo)
+    "http://localhost:3000",  # Admin Dashboard
+    "http://127.0.0.1:3000",  # Admin Dashboard (alternative)
+    "http://localhost:19006", # Expo web
+    "http://localhost:8081",  # React Native Metro bundler
 ]
 
 app.add_middleware(

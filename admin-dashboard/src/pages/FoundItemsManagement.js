@@ -123,6 +123,7 @@ const FoundItemsManagement = () => {
                                 <th>Category</th>
                                 <th>Description</th>
                                 <th>Location Found</th>
+                                <th>Reporter</th>
                                 <th>Status</th>
                                 <th>Storage Location</th>
                                 <th>Date Reported</th>
@@ -149,6 +150,18 @@ const FoundItemsManagement = () => {
                                     <td><strong>{item.category}</strong></td>
                                     <td>{item.description}</td>
                                     <td>{item.location}</td>
+                                    <td>
+                                        {item.user ? (
+                                            <div style={{ fontSize: '13px' }}>
+                                                <div><strong>{item.user.name || 'Unknown'}</strong></div>
+                                                {item.user.register_number && (
+                                                    <div style={{ color: '#666', fontSize: '11px' }}>{item.user.register_number}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ color: '#999' }}>Unknown</span>
+                                        )}
+                                    </td>
                                     <td>
                                         <span className={`badge badge-${item.status?.toLowerCase() || 'pending'}`}>
                                             {item.status || 'PENDING'}
@@ -236,6 +249,21 @@ const FoundItemsManagement = () => {
                             <div style={{ gridColumn: 'span 2' }}>
                                 <p><strong>Description:</strong> {selectedItem.description}</p>
                             </div>
+                        </div>
+
+                        <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '6px', marginBottom: '20px' }}>
+                            <h4 style={{ marginTop: 0, marginBottom: '10px', fontSize: '16px' }}>Reporter Information</h4>
+                            {selectedItem.user ? (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                    <p style={{ margin: '5px 0' }}><strong>Name:</strong> {selectedItem.user.name || 'N/A'}</p>
+                                    <p style={{ margin: '5px 0' }}><strong>Email:</strong> {selectedItem.user.email || 'N/A'}</p>
+                                    {selectedItem.user.register_number && (
+                                        <p style={{ margin: '5px 0' }}><strong>Register Number:</strong> {selectedItem.user.register_number}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p style={{ margin: '5px 0', color: '#999' }}>Reporter information not available</p>
+                            )}
                         </div>
 
                         <hr />

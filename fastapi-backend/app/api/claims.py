@@ -193,4 +193,9 @@ async def verify_claim(
             )
             
     updated_claim = await db["claims"].find_one({"_id": ObjectId(id)})
+    
+    # Convert ObjectId to string for JSON serialization
+    if updated_claim:
+        updated_claim = convert_object_ids(updated_claim)
+    
     return updated_claim

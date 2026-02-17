@@ -289,8 +289,19 @@ async def assign_storage_location(
     db = Depends(get_database)
 ):
     """Assign storage location to found item"""
+    print(f"[DEBUG] Assign storage called for item_id: {item_id}")
+    print(f"[DEBUG] Assignment data: {assignment}")
+    print(f"[DEBUG] Current user: {current_user.name} ({current_user.role})")
+    
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Validate ObjectId
+    try:
+        obj_id = ObjectId(item_id)
+    except Exception as e:
+        print(f"[ERROR] Invalid ObjectId: {item_id}, error: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid item ID format: {str(e)}")
     
     update_data = {
         "storage_location": assignment.storage_location,
@@ -303,28 +314,43 @@ async def assign_storage_location(
         update_data["admin_remarks"] = assignment.admin_remarks
 
     
-    result = await db["items"].update_one(
-        {"_id": ObjectId(item_id)},
-        {"$set": update_data}
-    )
-    
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-    
-    updated_item = await db["items"].find_one({"_id": ObjectId(item_id)})
-    
-    # Log action
-    await db["audit_logs"].insert_one({
-        "admin_id": str(current_user.id),
-        "admin_name": current_user.name,
-        "action": "STORAGE_ASSIGNED",
-        "target_type": "ITEM",
-        "target_id": item_id,
-        "details": {"storage_location": assignment.storage_location},
-        "timestamp": datetime.utcnow()
-    })
-    
-    return updated_item
+    try:
+        result = await db["items"].update_one(
+            {"_id": obj_id},
+            {"$set": update_data}
+        )
+        
+        print(f"[DEBUG] Update result: matched={result.matched_count}, modified={result.modified_count}")
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Item not found")
+        
+        updated_item = await db["items"].find_one({"_id": obj_id})
+        
+        # Convert ObjectId to string for JSON serialization
+        if updated_item:
+            updated_item["_id"] = str(updated_item["_id"])
+            if "user_id" in updated_item:
+                updated_item["user_id"] = str(updated_item["user_id"])
+        
+        # Log action
+        await db["audit_logs"].insert_one({
+            "admin_id": str(current_user.id),
+            "admin_name": current_user.name,
+            "action": "STORAGE_ASSIGNED",
+            "target_type": "ITEM",
+            "target_id": item_id,
+            "details": {"storage_location": assignment.storage_location},
+            "timestamp": datetime.utcnow()
+        })
+        
+        print(f"[DEBUG] Storage assigned successfully for item {item_id}")
+        return updated_item
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Failed to assign storage: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to assign storage: {str(e)}")
 
 # ============ ADMIN PROFILE & LOGIN HISTORY ============
 

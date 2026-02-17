@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Image, Text, StyleSheet, Dimensions } from 'react-native';
 import { COLORS } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -20,6 +20,9 @@ const SplashScreen = () => {
                     style={styles.mascot}
                     resizeMode="contain"
                 />
+            </View>
+            <View style={styles.productNameContainer}>
+                <Text style={styles.productName}>LostLink</Text>
             </View>
         </View>
     );
@@ -43,6 +46,17 @@ const styles = StyleSheet.create({
     logo: {
         width: width * 0.7,
         height: 150,
+    },
+    productNameContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    productName: {
+        fontSize: 42,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        letterSpacing: 2,
     },
     mascotContainer: {
         flex: 1,
