@@ -194,7 +194,8 @@ This is the most critical step for mobile device connection.
 | Role | Email | Password |
 | :--- | :--- | :--- |
 | **Admin** | `admin@rec.edu.in` | `admin123` |
-| **Student** | `register` | 
+| **Student** | `giri@rec.edu.in` | `student123` |
+| **Student** | `sai@rec.edu.in` | `student123` |
 
 
 ---

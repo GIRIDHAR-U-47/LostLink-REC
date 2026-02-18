@@ -6,7 +6,7 @@ from app.models.common import PyObjectId
 class UserBase(BaseModel):
     email: EmailStr
     name: str
-    register_number: Optional[str] = Field(None, alias="registerNumber")
+    register_number: Optional[str] = Field(None, alias="registerNumber", validation_alias="registerNumber", serialization_alias="registerNumber")
     role: Role = Role.USER
 
     class Config:

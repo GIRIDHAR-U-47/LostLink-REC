@@ -10,6 +10,7 @@ class ClaimBase(BaseModel):
     proof_image_url: Optional[str] = Field(None, alias="proofImageUrl", serialization_alias="proofImageUrl")
     verification_details: Optional[str] = Field(None, alias="verificationDetails", serialization_alias="verificationDetails")
     status: ClaimStatus = ClaimStatus.PENDING
+    admin_remarks: Optional[str] = Field(None, alias="adminRemarks", serialization_alias="adminRemarks")
 
 class ClaimCreate(ClaimBase):
     item_id: str

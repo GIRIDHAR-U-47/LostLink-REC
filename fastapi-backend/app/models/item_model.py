@@ -17,6 +17,7 @@ class ItemBase(BaseModel):
     storage_location: Optional[str] = None  # e.g., "Rack A, Shelf 3"
     admin_remarks: Optional[str] = None
     verified_by: Optional[str] = None  # Admin user ID who verified
+    verified_by_name: Optional[str] = None # Admin Name who verified
     verified_at: Optional[datetime] = None
 
 class ItemCreate(ItemBase):

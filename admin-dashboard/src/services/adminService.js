@@ -13,7 +13,8 @@ const adminService = {
 
     // Claims Management
     getClaimsByStatus: (status) => api.get('/claims/status', { params: status ? { status } : {} }),
-    verifyClaim: (claimId, status) => api.put(`/claims/${claimId}/verify?status=${status}`),
+    verifyClaim: (claimId, status, remarks) =>
+        api.put(`/claims/${claimId}/verify?status=${status}`, { remarks }),
 
     // Profile & Logs
     getProfile: () => api.get('/admin/profile'),

@@ -54,6 +54,44 @@ const MyRequestsScreen = ({ navigation }) => {
             ) : null}
             <Text style={styles.description}>{item.description}</Text>
             {item.location ? <Text style={styles.location}>📍 {item.location}</Text> : null}
+
+            {item.type === 'LOST' && (item.storage_location || item.admin_remarks) && (
+                <View style={styles.adminSection}>
+                    <Text style={styles.adminTitle}>Admin Updates</Text>
+                    {item.storage_location && (
+                        <Text style={styles.storageText}>
+                            <Text style={{ fontWeight: 'bold' }}>Collection Point:</Text> {item.storage_location}
+                        </Text>
+                    )}
+                    {item.admin_remarks && (
+                        <Text style={styles.remarksText}>
+                            <Text style={{ fontWeight: 'bold' }}>Note:</Text> {item.admin_remarks}
+                        </Text>
+                    )}
+                    {item.status === 'AVAILABLE' && (
+                        <Text style={styles.instructionText}>
+                            Please visit the collection point mentioned above to retrieve your item.
+                        </Text>
+                    )}
+                </View>
+            )}
+
+            {item.type === 'FOUND' && item.status === 'AVAILABLE' && (
+                <View style={[styles.adminSection, { backgroundColor: '#e8f5e9', borderTopColor: '#c8e6c9' }]}>
+                    <Text style={[styles.adminTitle, { color: '#2e7d32' }]}>Verified Status</Text>
+                    <Text style={styles.storageText}>
+                        <Text style={{ fontWeight: 'bold' }}>Status:</Text> Handed over to Admin
+                    </Text>
+                    {item.verified_by_name && (
+                        <Text style={styles.storageText}>
+                            <Text style={{ fontWeight: 'bold' }}>Received by:</Text> {item.verified_by_name}
+                        </Text>
+                    )}
+                    <Text style={styles.instructionText}>
+                        Thank you for your honesty! The item is now safe with the admin desk.
+                    </Text>
+                </View>
+            )}
         </View>
     );
 
@@ -152,6 +190,44 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 50,
         color: COLORS.textLight,
+    },
+    adminSection: {
+        marginTop: 15,
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        backgroundColor: '#f8f9ff',
+        padding: 10,
+        borderRadius: 8,
+    },
+    adminTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    storageText: {
+        fontSize: 14,
+        color: COLORS.text,
+        marginBottom: 5,
+    },
+    remarksText: {
+        fontSize: 14,
+        color: COLORS.textLight,
+        fontStyle: 'italic',
+        marginBottom: 8,
+    },
+    instructionText: {
+        fontSize: 12,
+        color: COLORS.success,
+        fontWeight: '600',
+        marginTop: 5,
+        textAlign: 'center',
+        backgroundColor: '#e8f5e9',
+        padding: 5,
+        borderRadius: 4,
     },
 });
 

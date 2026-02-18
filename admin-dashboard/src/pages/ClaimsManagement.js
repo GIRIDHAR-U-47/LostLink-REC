@@ -38,7 +38,7 @@ const ClaimsManagement = () => {
     const handleClaimAction = async (claimId, action) => {
         try {
             const status = action === 'approved' ? 'APPROVED' : 'REJECTED';
-            await adminService.verifyClaim(claimId, status);
+            await adminService.verifyClaim(claimId, status, remarks);
 
             alert(`Claim ${action} successfully`);
             setRemarks('');
@@ -124,6 +124,7 @@ const ClaimsManagement = () => {
                                                         className="btn btn-success btn-sm"
                                                         onClick={() => {
                                                             setSelectedClaim(claim);
+                                                            setRemarks('');
                                                         }}
                                                     >
                                                         Review
@@ -135,6 +136,7 @@ const ClaimsManagement = () => {
                                                     className="btn btn-secondary btn-sm"
                                                     onClick={() => {
                                                         setSelectedClaim(claim);
+                                                        setRemarks(claim.adminRemarks || claim.admin_remarks || '');
                                                     }}
                                                 >
                                                     View Details
@@ -220,6 +222,7 @@ const ClaimsManagement = () => {
                                 placeholder="Enter your decision and remarks..."
                                 rows="4"
                                 style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                                disabled={selectedClaim.status !== 'PENDING'}
                             />
                         </div>
 

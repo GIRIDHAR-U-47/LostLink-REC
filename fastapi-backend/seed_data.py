@@ -44,20 +44,20 @@ def seed_data():
             "created_at": datetime.utcnow()
         },
         {
-            "name": "John Doe",
-            "email": "john@rec.edu.in",
+            "name": "Giridhar",
+            "email": "Giri@rec.edu.in",
             "password": get_password_hash("student123"),
             "role": "USER",
             "roles": ["USER"],
             "registerNumber": "2101001",
-            "department": "CSE",
+            "department": "AIML",
             "phone": "9876543210",
             "is_active": True,
             "created_at": datetime.utcnow()
         },
         {
-            "name": "Jane Smith",
-            "email": "jane@rec.edu.in",
+            "name": "Sai",
+            "email": "Sai@rec.edu.in",
             "password": get_password_hash("student123"),
             "role": "USER",
             "roles": ["USER"],
@@ -84,7 +84,7 @@ def seed_data():
             "status": "AVAILABLE",
             "type": "FOUND",
             "is_active": True,
-            "user_id": str(user_ids["john@rec.edu.in"]),
+            "user_id": str(user_ids["Giri@rec.edu.in"]),
             "image_url": "uploads/default_charger.jpg", 
             "storage_location": "Rack A1",
             "created_at": datetime.utcnow()
@@ -97,7 +97,7 @@ def seed_data():
             "status": "PENDING", 
             "type": "FOUND",
             "is_active": True,
-            "user_id": str(user_ids["jane@rec.edu.in"]),
+            "user_id": str(user_ids["Sai@rec.edu.in"]),
             "created_at": datetime.utcnow()
         },
         # Lost Items
@@ -109,7 +109,7 @@ def seed_data():
             "status": "LOST",
             "type": "LOST",
             "is_active": True,
-            "user_id": str(user_ids["john@rec.edu.in"]),
+            "user_id": str(user_ids["Giri@rec.edu.in"]),
             "contact_phone": "9876543210",
             "created_at": datetime.utcnow()
         }
@@ -128,15 +128,15 @@ def seed_data():
         claims = [
             {
                 "item_id": charger_item["_id"],
-                "claimant_id": str(user_ids["jane@rec.edu.in"]),
+                "claimant_id": str(user_ids["Sai@rec.edu.in"]),
                 "status": "PENDING",
                 "proofOfOwnership": "Usage scratch marks on the adapter brick",
                 "verificationDetails": "Usage scratch marks on the adapter brick", # Compatibility
                 "timestamp": datetime.utcnow(),
                 "created_at": datetime.utcnow(),
                 # Flattened fields for UI compat if API returns raw docs
-                "claimantName": "Jane Smith",
-                "claimantEmail": "jane@rec.edu.in",
+                "claimantName": "Sai",
+                "claimantEmail": "Sai@rec.edu.in",
                 "category": "Electronics",
                 "description": "Black Dell Laptop Charger found in Library"
             }

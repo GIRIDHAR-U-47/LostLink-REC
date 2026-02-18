@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import adminService from '../services/adminService';
+import { API_BASE_URL } from '../services/api';
 
 const FoundItemsManagement = () => {
     const [items, setItems] = useState([]);
@@ -14,23 +15,24 @@ const FoundItemsManagement = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [storageLocation, setStorageLocation] = useState('');
     const [remarks, setRemarks] = useState('');
+    const [updating, setUpdating] = useState(false);
 
     const fetchItems = useCallback(async () => {
         setLoading(true);
         try {
-            console.log('Fetching found items...');
             const response = await adminService.searchItems({
                 item_type: 'FOUND',
-                status: filters.status
+                status: filters.status,
+                query: searchQuery,
+                category: filters.category
             });
-            console.log('Found items response:', response.data);
             setItems(response.data || []);
         } catch (error) {
             console.error('Error fetching found items:', error);
         } finally {
             setLoading(false);
         }
-    }, [filters.status]);
+    }, [filters.status, searchQuery, filters.category]);
 
     useEffect(() => {
         fetchItems();
@@ -42,10 +44,11 @@ const FoundItemsManagement = () => {
             return;
         }
 
+        setUpdating(true);
         try {
             await adminService.assignStorage(itemId, storageLocation, remarks);
 
-            // Optimistic UI Update: Update the local state immediately
+            // Optimistic UI Update
             setItems(currentItems => currentItems.map(item =>
                 (item.id === itemId || item._id === itemId)
                     ? { ...item, storage_location: storageLocation, admin_remarks: remarks, status: 'AVAILABLE' }
@@ -55,33 +58,68 @@ const FoundItemsManagement = () => {
             setStorageLocation('');
             setRemarks('');
             setSelectedItem(null);
-
-            // Background refresh
-            fetchItems();
+            alert('Item verified and storage assigned successfully!');
         } catch (error) {
             alert('Error: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
         }
     };
 
-    return (
-        <div>
-            <h1>Found Items Management</h1>
+    const getRecencyLabel = (dateTime) => {
+        const days = Math.floor((new Date() - new Date(dateTime)) / (1000 * 60 * 60 * 24));
+        if (days === 0) return 'Today';
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days} days ago`;
+        return new Date(dateTime).toLocaleDateString();
+    };
 
-            {/* Search & Filters */}
-            <div className="search-container">
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Search by name, category, or location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button className="search-button" onClick={fetchItems}>Search</button>
+    return (
+        <div style={{ padding: '20px', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h1 style={{ margin: 0, color: '#2d3436', fontSize: '2.5rem', fontWeight: '800' }}>Found Items Management</h1>
+                <div style={{ color: '#636e72', fontWeight: '500' }}>
+                    {items.length} Discoveries Pending Action
+                </div>
             </div>
 
-            <div className="search-container" style={{ gap: '10px' }}>
+            {/* Premium Search & Filters */}
+            <div style={{
+                backgroundColor: 'white',
+                padding: '24px',
+                borderRadius: '16px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                marginBottom: '30px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '15px'
+            }}>
+                <div style={{ flex: '1', minWidth: '300px' }}>
+                    <input
+                        type="text"
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            border: '1px solid #dfe6e9',
+                            fontSize: '16px',
+                            outline: 'none'
+                        }}
+                        placeholder="Search categories, descriptions, or locations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+
                 <select
-                    className="search-input"
+                    style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #dfe6e9',
+                        backgroundColor: 'white',
+                        minWidth: '180px',
+                        cursor: 'pointer'
+                    }}
                     value={filters.category}
                     onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
@@ -95,209 +133,251 @@ const FoundItemsManagement = () => {
                 </select>
 
                 <select
-                    className="search-input"
+                    style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #dfe6e9',
+                        backgroundColor: 'white',
+                        minWidth: '180px',
+                        cursor: 'pointer'
+                    }}
                     value={filters.status}
                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >
-                    <option value="">All Status</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="AVAILABLE">Available</option>
-                    <option value="RETURNED">Returned</option>
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending Verification</option>
+                    <option value="AVAILABLE">Available / Verified</option>
+                    <option value="RETURNED">Returned to Owner</option>
                 </select>
+
+                <button
+                    onClick={fetchItems}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: '#6c5ce7',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(108, 92, 231, 0.3)'
+                    }}
+                >
+                    Search Database
+                </button>
             </div>
 
-            {/* Items Table */}
+            {/* Items Grid */}
             {loading ? (
-                <div className="loading">Loading items...</div>
+                <div style={{ textAlign: 'center', padding: '100px', color: '#636e72' }}>
+                    <p style={{ fontSize: '18px' }}>Syncing discovery logs...</p>
+                </div>
             ) : items.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-state-icon">-</div>
-                    <p>No found items to display</p>
+                <div style={{ textAlign: 'center', padding: '80px', backgroundColor: 'white', borderRadius: '16px', color: '#b2bec3' }}>
+                    <p style={{ fontSize: '20px' }}>No found items recorded in this sector.</p>
                 </div>
             ) : (
-                <div className="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Thumbnail</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th>Location Found</th>
-                                <th>Reporter</th>
-                                <th>Status</th>
-                                <th>Storage Location</th>
-                                <th>Date Reported</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map(item => (
-                                <tr key={item.id || item._id}>
-                                    <td>
-                                        {(item.imageUrl || item.image_url) ? (
-                                            <img
-                                                src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
-                                                alt={item.category}
-                                                style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
-                                                onError={(e) => {
-                                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50"%3E%3Crect fill="%23f0f0f0" width="50" height="50"/%3E%3Ctext x="25" y="25" text-anchor="middle" dy=".3em" fill="%23999" font-size="8" font-family="sans-serif"%3ENo Img%3C/text%3E%3C/svg%3E';
-                                                }}
-                                            />
-                                        ) : (
-                                            <div style={{ width: '50px', height: '50px', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '10px', color: '#999' }}>No Img</div>
-                                        )}
-                                    </td>
-                                    <td><strong>{item.category}</strong></td>
-                                    <td>{item.description}</td>
-                                    <td>{item.location}</td>
-                                    <td>
-                                        {item.user ? (
-                                            <div style={{ fontSize: '13px' }}>
-                                                <div><strong>{item.user.name || 'Unknown'}</strong></div>
-                                                {item.user.register_number && (
-                                                    <div style={{ color: '#666', fontSize: '11px' }}>{item.user.register_number}</div>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <span style={{ color: '#999' }}>Unknown</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <span className={`badge badge-${item.status?.toLowerCase() || 'pending'}`}>
-                                            {item.status || 'PENDING'}
-                                        </span>
-                                    </td>
-                                    <td>{item.storage_location || 'Not assigned'}</td>
-                                    <td>{new Date(item.dateTime).toLocaleDateString()}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
-                                            <button className="btn" style={{ fontSize: '12px', padding: '5px 10px' }}
-                                                onClick={() => setSelectedItem(item)}>
-                                                Assign Storage
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
+                    {items.map(item => (
+                        <div
+                            key={item.id || item._id}
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: '16px',
+                                overflow: 'hidden',
+                                boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+                                transition: 'all 0.3s',
+                                cursor: 'pointer',
+                                border: '1px solid #f1f2f6',
+                                position: 'relative'
+                            }}
+                            onClick={() => {
+                                setSelectedItem(item);
+                                setStorageLocation(item.storage_location || '');
+                                setRemarks(item.admin_remarks || '');
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-8px)';
+                                e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.05)';
+                            }}
+                        >
+                            {(item.imageUrl || item.image_url) ? (
+                                <div style={{ height: '200px', position: 'relative' }}>
+                                    <img
+                                        src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
+                                        alt={item.category}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '12px',
+                                        right: '12px',
+                                        padding: '6px 14px',
+                                        backgroundColor: 'rgba(255,255,255,0.9)',
+                                        borderRadius: '30px',
+                                        fontSize: '11px',
+                                        fontWeight: '800',
+                                        color: '#2d3436',
+                                        backdropFilter: 'blur(4px)'
+                                    }}>
+                                        {item.category}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ height: '160px', backgroundColor: '#6c5ce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔎</div>
+                                    <div style={{ color: 'white', fontWeight: '600' }}>{item.category}</div>
+                                </div>
+                            )}
+
+                            <div style={{ padding: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                    <span style={{
+                                        padding: '4px 12px',
+                                        borderRadius: '6px',
+                                        fontSize: '11px',
+                                        fontWeight: '800',
+                                        textTransform: 'uppercase',
+                                        backgroundColor: item.status === 'AVAILABLE' ? '#d1fae5' :
+                                            item.status === 'PENDING' ? '#fef3c7' : '#fee2e2',
+                                        color: item.status === 'AVAILABLE' ? '#059669' :
+                                            item.status === 'PENDING' ? '#d97706' : '#dc2626'
+                                    }}>
+                                        {item.status || 'PENDING'}
+                                    </span>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
+                                        {getRecencyLabel(item.dateTime)}
+                                    </span>
+                                </div>
+
+                                <h3 style={{ margin: '0 0 10px 0', color: '#334155', fontSize: '1.25rem' }}>{item.category}</h3>
+                                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{item.description}</p>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: '13px', color: '#475569' }}>
+                                        <strong>Found at:</strong> {item.location}
+                                    </div>
+                                    <div style={{ fontSize: '18px' }} title="Details / Manage">➡️</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Item Detail & Storage Modal */}
+            {/* Premium Management Modal */}
             {selectedItem && (
                 <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                    overflowY: 'auto',
-                    padding: '20px'
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 2000, padding: '20px', backdropFilter: 'blur(8px)'
                 }}>
                     <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '8px',
-                        maxWidth: '600px',
-                        width: '100%',
-                        maxHeight: '90vh',
-                        overflowY: 'auto'
+                        background: 'white', borderRadius: '24px', maxWidth: '850px', width: '100%',
+                        maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ margin: 0 }}>Item Details</h2>
-                            <button className="btn btn-danger" onClick={() => {
-                                setSelectedItem(null);
-                                setStorageLocation('');
-                                setRemarks('');
-                            }}>✕</button>
+                        <div style={{
+                            padding: '25px 30px',
+                            backgroundColor: '#6c5ce7',
+                            color: 'white',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                            <h2 style={{ margin: 0, fontWeight: '700' }}>Discovery Management</h2>
+                            <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>✕</button>
                         </div>
 
-                        {(selectedItem.imageUrl || selectedItem.image_url) && (
-                            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                                <img
-                                    src={`${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`}
-                                    alt={selectedItem.category}
-                                    style={{
-                                        maxWidth: '100%',
-                                        maxHeight: '300px',
-                                        objectFit: 'contain',
-                                        borderRadius: '8px',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                    }}
-                                    onError={(e) => {
-                                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif"%3ENo Image%3C/text%3E%3C/svg%3E';
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-                            <div>
-                                <p><strong>Category:</strong> {selectedItem.category}</p>
-                                <p><strong>Location Found:</strong> {selectedItem.location}</p>
-                            </div>
-                            <div>
-                                <p><strong>Status:</strong> {selectedItem.status || 'PENDING'}</p>
-                                <p><strong>Date Reported:</strong> {new Date(selectedItem.dateTime).toLocaleDateString()}</p>
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <p><strong>Description:</strong> {selectedItem.description}</p>
-                            </div>
-                        </div>
-
-                        <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '6px', marginBottom: '20px' }}>
-                            <h4 style={{ marginTop: 0, marginBottom: '10px', fontSize: '16px' }}>Reporter Information</h4>
-                            {selectedItem.user ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                    <p style={{ margin: '5px 0' }}><strong>Name:</strong> {selectedItem.user.name || 'N/A'}</p>
-                                    <p style={{ margin: '5px 0' }}><strong>Email:</strong> {selectedItem.user.email || 'N/A'}</p>
-                                    {selectedItem.user.register_number && (
-                                        <p style={{ margin: '5px 0' }}><strong>Register Number:</strong> {selectedItem.user.register_number}</p>
+                        <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 300px', gap: '40px' }}>
+                                <div>
+                                    {(selectedItem.imageUrl || selectedItem.image_url) && (
+                                        <div style={{ marginBottom: '25px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                                            <img src={`${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`} style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }} alt="Found item" />
+                                        </div>
                                     )}
+
+                                    <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
+                                        <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#1e293b' }}>Reporter Insights</h4>
+                                        {selectedItem.user ? (
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>NAME</div>
+                                                    <div style={{ fontWeight: '600' }}>{selectedItem.user.name}</div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>REGISTRATION</div>
+                                                    <div style={{ fontWeight: '600' }}>{selectedItem.user.registerNumber || selectedItem.user.register_number || 'Internal'}</div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p style={{ color: '#94a3b8' }}>Anonymous submission</p>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>CATEGORY</div>
+                                            <div style={{ fontWeight: '600' }}>{selectedItem.category}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>DISCOVERY DATE</div>
+                                            <div style={{ fontWeight: '600' }}>{new Date(selectedItem.dateTime).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
-                                <p style={{ margin: '5px 0', color: '#999' }}>Reporter information not available</p>
-                            )}
-                        </div>
 
-                        <hr />
+                                <div>
+                                    <h4 style={{ marginTop: 0, marginBottom: '20px', color: '#1e293b' }}>Storage Assignment</h4>
 
-                        <h3 style={{ marginTop: '20px' }}>Assign Storage Location</h3>
-                        <div className="form-group">
-                            <label>Storage Location (e.g., Rack A, Shelf 3)</label>
-                            <input
-                                type="text"
-                                value={storageLocation}
-                                onChange={(e) => setStorageLocation(e.target.value)}
-                                placeholder="Enter storage location"
-                                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-                            />
-                        </div>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#475569', marginBottom: '8px' }}>STORAGE SLOT</label>
+                                        <input
+                                            type="text"
+                                            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}
+                                            placeholder="e.g. Almirah 3, Row B"
+                                            value={storageLocation}
+                                            onChange={(e) => setStorageLocation(e.target.value)}
+                                        />
+                                    </div>
 
-                        <div className="form-group">
-                            <label>Admin Remarks</label>
-                            <textarea
-                                value={remarks}
-                                onChange={(e) => setRemarks(e.target.value)}
-                                placeholder="Optional remarks..."
-                                rows="3"
-                                style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-                            />
-                        </div>
+                                    <div style={{ marginBottom: '30px' }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#475569', marginBottom: '8px' }}>ADMIN REMARKS</label>
+                                        <textarea
+                                            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '100px', backgroundColor: '#f8fafc' }}
+                                            placeholder="Add specific collection notes..."
+                                            value={remarks}
+                                            onChange={(e) => setRemarks(e.target.value)}
+                                        />
+                                    </div>
 
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                            <button className="btn btn-success" style={{ flex: 1 }} onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}>
-                                Update Item
-                            </button>
-                            <button className="btn" style={{ flex: 1 }} onClick={() => setSelectedItem(null)}>
-                                Close
-                            </button>
+                                    <button
+                                        onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}
+                                        disabled={updating}
+                                        style={{
+                                            width: '100%', padding: '16px',
+                                            backgroundColor: '#6c5ce7', color: 'white',
+                                            border: 'none', borderRadius: '14px',
+                                            fontWeight: '700', cursor: 'pointer',
+                                            boxShadow: '0 10px 15px -3px rgba(108, 92, 231, 0.4)',
+                                            marginBottom: '15px'
+                                        }}
+                                    >
+                                        {updating ? 'Verifying...' : selectedItem.storage_location ? 'Update Details' : 'Verify & Set Available'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedItem(null)}
+                                        style={{ width: '100%', padding: '16px', background: '#f1f5f9', border: 'none', borderRadius: '14px', fontWeight: '600', color: '#475569', cursor: 'pointer' }}
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

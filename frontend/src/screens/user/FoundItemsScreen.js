@@ -35,13 +35,6 @@ const FoundItemsScreen = ({ navigation }) => {
                 <Text style={styles.category}>{item.category}</Text>
                 <Text style={styles.date}>{new Date(item.dateTime).toLocaleDateString()}</Text>
             </View>
-            {item.imageUrl ? (
-                <Image
-                    source={{ uri: `${api.defaults.baseURL.replace('/api', '')}/${item.imageUrl}` }}
-                    style={styles.itemImage}
-                    resizeMode="cover"
-                />
-            ) : null}
             <Text style={styles.location}>📍 {item.location}</Text>
             <Text style={styles.description}>{item.description}</Text>
 

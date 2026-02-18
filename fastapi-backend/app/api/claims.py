@@ -169,15 +169,20 @@ async def get_my_claims(
 async def verify_claim(
     id: str,
     status: ClaimStatus,
+    remarks: Optional[str] = Body(None, embed=True),
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized")
         
+    update_data = {"status": status}
+    if remarks:
+        update_data["admin_remarks"] = remarks
+        
     result = await db["claims"].update_one(
         {"_id": ObjectId(id)},
-        {"$set": {"status": status}}
+        {"$set": update_data}
     )
     
     if result.modified_count == 0:

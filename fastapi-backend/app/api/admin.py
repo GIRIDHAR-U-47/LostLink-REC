@@ -306,6 +306,7 @@ async def assign_storage_location(
     update_data = {
         "storage_location": assignment.storage_location,
         "verified_by": str(current_user.id),
+        "verified_by_name": current_user.name,
         "verified_at": datetime.utcnow(),
         "status": "AVAILABLE"  # Automatically verified
     }
