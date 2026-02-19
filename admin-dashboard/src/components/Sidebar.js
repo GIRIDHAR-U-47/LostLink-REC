@@ -8,7 +8,11 @@ const Sidebar = ({ isOpen, onToggle, userInfo }) => {
         { path: '/dashboard', label: 'Dashboard' },
         { path: '/found-items', label: 'Found Items' },
         { path: '/lost-items', label: 'Lost Items' },
+        { path: '/matches', label: 'Match Supervision' },
         { path: '/claims', label: 'Claims' },
+        { path: '/handovers', label: 'Handover Registry' },
+        { path: '/broadcast', label: 'Broadcast' },
+        { path: '/logs', label: 'Activity Logs' },
         { path: '/profile', label: 'Profile' },
     ];
 

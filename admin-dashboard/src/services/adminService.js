@@ -25,6 +25,16 @@ const adminService = {
     getNotifications: (unreadOnly = false) => api.get(`/admin/notifications?unread_only=${unreadOnly}`),
     markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
 
+    // New Enhanced Features
+    addFoundItem: (formData) => api.post('/admin/items/found', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    getMatches: () => api.get('/admin/items/matches'),
+    handoverItem: (itemId, handoverData) => api.post(`/admin/items/${itemId}/handover`, handoverData),
+    archiveItem: (itemId) => api.post(`/admin/items/${itemId}/archive`),
+    disposeItem: (itemId) => api.post(`/admin/items/${itemId}/dispose`),
+    sendBroadcast: (broadcastData) => api.post('/admin/broadcast', broadcastData),
+
     // Helpers
     getBaseUrl: () => 'http://127.0.0.1:8080'
 };

@@ -194,11 +194,22 @@ async def verify_claim(
         if claim:
             await db["items"].update_one(
                 {"_id": ObjectId(claim["item_id"])},
-                {"$set": {"status": ItemStatus.RESOLVED}} # Or RETURNED
+                {"$set": {"status": ItemStatus.CLAIMED}} # Required mandatory physical handover
             )
             
     updated_claim = await db["claims"].find_one({"_id": ObjectId(id)})
     
+    # Audit Log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": f"CLAIM_{status}",
+        "target_type": "CLAIM",
+        "target_id": id,
+        "details": {"status": status, "remarks": remarks},
+        "timestamp": datetime.utcnow()
+    })
+
     # Convert ObjectId to string for JSON serialization
     if updated_claim:
         updated_claim = convert_object_ids(updated_claim)

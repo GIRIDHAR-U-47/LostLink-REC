@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, Form, UploadFile, File
 from typing import List, Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
@@ -16,6 +16,16 @@ router = APIRouter()
 class StorageAssignment(BaseModel):
     storage_location: str
     admin_remarks: Optional[str] = None
+
+class HandoverRequest(BaseModel):
+    student_id: str
+    admin_name: str
+    remarks: Optional[str] = None
+
+class BroadcastRequest(BaseModel):
+    title: str
+    message: str
+    category: Optional[str] = "SYSTEM"
 
 
 # ============ DASHBOARD STATISTICS ============
@@ -36,9 +46,14 @@ async def get_dashboard_stats(
     total_found = await items_col.count_documents({"type": "FOUND"})
     pending_items = await items_col.count_documents({"status": "PENDING"})
     available_items = await items_col.count_documents({"status": "AVAILABLE"})
+    
+    # Correct total resolved count (Including legacy RESOLVED status)
+    total_resolved = await items_col.count_documents({"status": {"$in": ["RETURNED", "RESOLVED"]}})
+    
+    # Items returned in the last 24 hours
     returned_today = await items_col.count_documents({
-        "status": "RETURNED",
-        "verified_at": {"$gte": datetime.utcnow() - timedelta(days=1)}
+        "status": {"$in": ["RETURNED", "RESOLVED"]},
+        "handed_over_at": {"$gte": datetime.utcnow() - timedelta(days=1)}
     })
     
     # High-risk items (phones, IDs, keys, devices, jewellery)
@@ -56,13 +71,10 @@ async def get_dashboard_stats(
         "total_found": total_found,
         "pending_verification": pending_items,
         "available_items": available_items,
+        "total_resolved": total_resolved,
         "returned_today": returned_today,
         "high_risk_items": high_risk,
-        "pending_claims": pending_claims,
-        "_debug": {
-            "total_claims_in_db": await claims_col.count_documents({}),
-            "total_items_in_db": await items_col.count_documents({})
-        }
+        "pending_claims": pending_claims
     }
 
 @router.get("/stats/category-breakdown")
@@ -96,13 +108,19 @@ async def get_recovery_rate(
     items_col = db["items"]
     
     total_found = await items_col.count_documents({"type": "FOUND"})
-    returned = await items_col.count_documents({"type": "FOUND", "status": "RETURNED"})
+    # Count CLAIMED (Approved/Handover pending) and RETURNED/RESOLVED (Complete) as "Recovered"
+    returned = await items_col.count_documents({"type": "FOUND", "status": {"$in": ["RETURNED", "RESOLVED"]}})
+    claimed = await items_col.count_documents({"type": "FOUND", "status": "CLAIMED"})
     
-    rate = (returned / total_found * 100) if total_found > 0 else 0
+    total_recovered = returned + claimed
+    
+    rate = (total_recovered / total_found * 100) if total_found > 0 else 0
     
     return {
         "total_found": total_found,
-        "returned": returned,
+        "returned": total_recovered, # We'll call this "Recovered" in UI
+        "verified_handover": returned,
+        "pending_handover": claimed,
         "recovery_rate_percent": round(rate, 2)
     }
 
@@ -167,6 +185,113 @@ async def search_items(
     
     return results
 
+@router.post("/items/found", response_model=ItemResponse)
+async def admin_add_found_item(
+    category: str = Form(...),
+    description: str = Form(...),
+    location: str = Form(...),
+    storage_location: str = Form(...),
+    admin_remarks: Optional[str] = Form(None),
+    image: UploadFile = File(None),
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Directly add a found item by admin with image upload"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    import shutil
+    import os
+    
+    image_url = None
+    if image:
+        image_dir = os.path.join(os.getcwd(), "static", "images")
+        os.makedirs(image_dir, exist_ok=True)
+        file_location = os.path.join(image_dir, image.filename)
+        with open(file_location, "wb+") as file_object:
+             shutil.copyfileobj(image.file, file_object)
+        image_url = f"static/images/{image.filename}"
+    
+    item_dict = {
+        "type": ItemType.FOUND,
+        "category": category,
+        "description": description,
+        "location": location,
+        "storage_location": storage_location,
+        "admin_remarks": admin_remarks,
+        "imageUrl": image_url,
+        "dateTime": datetime.utcnow(),
+        "status": ItemStatus.AVAILABLE,
+        "user_id": str(current_user.id),
+        "verified_by": str(current_user.id),
+        "verified_by_name": current_user.name,
+        "verified_at": datetime.utcnow()
+    }
+    
+    result = await db["items"].insert_one(item_dict)
+    item_dict["_id"] = str(result.inserted_id)
+    
+    # Audit Log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "ITEM_CREATED_BY_ADMIN",
+        "target_type": "ITEM",
+        "target_id": str(result.inserted_id),
+        "details": {"category": category, "description": description},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return item_dict
+
+# ============ MATCHING SUPERVISION ============
+@router.get("/items/matches")
+async def get_potential_matches(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Find potential matches between LOST and FOUND items.
+    """
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    found_cursor = db["items"].find({
+        "type": "FOUND",
+        "status": {"$in": ["PENDING", "AVAILABLE"]}
+    })
+    found_items = await found_cursor.to_list(length=100)
+    
+    lost_cursor = db["items"].find({
+        "type": "LOST",
+        "status": "OPEN"
+    })
+    lost_items = await lost_cursor.to_list(length=100)
+    
+    matches = []
+    for f in found_items:
+        for l in lost_items:
+            if f["category"] == l["category"]:
+                f_desc = (f.get("description") or "").lower()
+                l_desc = (l.get("description") or "").lower()
+                
+                f_words = set(w for w in f_desc.split() if len(w) > 3)
+                l_words = set(w for w in l_desc.split() if len(w) > 3)
+                common = f_words.intersection(l_words)
+                
+                confidence = "LOW"
+                if len(common) > 0:
+                    confidence = "HIGH"
+                
+                matches.append({
+                    "found_item": {**f, "_id": str(f["_id"])},
+                    "lost_item": {**l, "_id": str(l["_id"])},
+                    "confidence": confidence,
+                    "shared_keywords": list(common)
+                })
+                
+    return matches
+
 # ============ AUDIT LOGS ============
 
 @router.post("/audit-log")
@@ -209,6 +334,10 @@ async def get_audit_logs(
     
     cursor = db["audit_logs"].find().sort("timestamp", -1).limit(limit)
     logs = await cursor.to_list(length=limit)
+    
+    # Convert ObjectId for serialization
+    for log in logs:
+        log["_id"] = str(log["_id"])
     
     return logs
 
@@ -279,6 +408,176 @@ async def create_notification(
     
     return notification
 
+# ============ PHYSICAL HANDOVER & UNCLAIMED HANDLING ============
+
+@router.post("/items/{item_id}/handover")
+async def process_physical_handover(
+    item_id: str,
+    handover: HandoverRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Mark an item as physically returned and record student details"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+    
+    update_data = {
+        "status": ItemStatus.RETURNED,
+        "handed_over_by": str(current_user.id),
+        "handed_over_by_name": handover.admin_name,
+        "handed_over_to_student_id": handover.student_id,
+        "handed_over_at": datetime.utcnow()
+    }
+    
+    if handover.remarks:
+        update_data["admin_remarks"] = handover.remarks
+
+    result = await db["items"].update_one(
+        {"_id": obj_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Log the action
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "PHYSICAL_HANDOVER",
+        "target_type": "ITEM",
+        "target_id": item_id,
+        "details": {
+            "student_id": handover.student_id,
+            "remarks": handover.remarks
+        },
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"message": "Handover recorded successfully"}
+
+@router.post("/items/{item_id}/archive")
+async def archive_unclaimed_item(
+    item_id: str,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Mark an item as archived"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+        
+    result = await db["items"].update_one(
+        {"_id": obj_id},
+        {"$set": {"status": ItemStatus.ARCHIVED, "archived_at": datetime.utcnow()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    # Audit Log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "ITEM_ARCHIVED",
+        "target_type": "ITEM",
+        "target_id": item_id,
+        "details": {"status": "ARCHIVED"},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"message": "Item archived"}
+
+@router.post("/items/{item_id}/dispose")
+async def dispose_unclaimed_item(
+    item_id: str,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Mark an item as disposed"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+        
+    result = await db["items"].update_one(
+        {"_id": obj_id},
+        {"$set": {"status": ItemStatus.DISPOSED, "disposed_at": datetime.utcnow()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    # Audit Log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "ITEM_DISPOSED",
+        "target_type": "ITEM",
+        "target_id": item_id,
+        "details": {"status": "DISPOSED"},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"message": "Item marked as disposed"}
+
+# ============ CAMPUS BROADCAST ============
+
+@router.post("/broadcast")
+async def send_campus_broadcast(
+    broadcast: BroadcastRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Send a notification to all registered users"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get all user IDs
+    users_cursor = db["users"].find({}, {"_id": 1})
+    users = await users_cursor.to_list(length=None)
+    
+    notifications = []
+    now = datetime.utcnow()
+    
+    for user in users:
+        notifications.append({
+            "user_id": str(user["_id"]),
+            "title": broadcast.title,
+            "message": broadcast.message,
+            "type": broadcast.category,
+            "read": False,
+            "created_at": now
+        })
+    
+    if notifications:
+        await db["notifications"].insert_many(notifications)
+        
+    # Log the action
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "CAMPUS_BROADCAST",
+        "target_type": "SYSTEM",
+        "target_id": "ALL_USERS",
+        "details": {"title": broadcast.title},
+        "timestamp": now
+    })
+    
+    return {"message": f"Broadcast sent to {len(notifications)} users"}
+
 # ============ STORAGE MANAGEMENT ============
 
 @router.put("/items/{item_id}/assign-storage")
@@ -289,10 +588,6 @@ async def assign_storage_location(
     db = Depends(get_database)
 ):
     """Assign storage location to found item"""
-    print(f"[DEBUG] Assign storage called for item_id: {item_id}")
-    print(f"[DEBUG] Assignment data: {assignment}")
-    print(f"[DEBUG] Current user: {current_user.name} ({current_user.role})")
-    
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -300,7 +595,6 @@ async def assign_storage_location(
     try:
         obj_id = ObjectId(item_id)
     except Exception as e:
-        print(f"[ERROR] Invalid ObjectId: {item_id}, error: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid item ID format: {str(e)}")
     
     update_data = {
@@ -320,8 +614,6 @@ async def assign_storage_location(
             {"_id": obj_id},
             {"$set": update_data}
         )
-        
-        print(f"[DEBUG] Update result: matched={result.matched_count}, modified={result.modified_count}")
         
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -345,12 +637,10 @@ async def assign_storage_location(
             "timestamp": datetime.utcnow()
         })
         
-        print(f"[DEBUG] Storage assigned successfully for item {item_id}")
         return updated_item
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[ERROR] Failed to assign storage: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to assign storage: {str(e)}")
 
 # ============ ADMIN PROFILE & LOGIN HISTORY ============
@@ -387,4 +677,7 @@ async def get_login_history(
     }).sort("timestamp", -1).limit(20)
     
     history = await cursor.to_list(length=20)
+    for entry in history:
+        entry["_id"] = str(entry["_id"])
+        
     return history

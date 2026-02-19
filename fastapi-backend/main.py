@@ -34,11 +34,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import auth, items, claims, admin
+from app.api import auth, items, claims, admin, notifications
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(items.router, prefix="/api/items", tags=["items"])
 app.include_router(claims.router, prefix="/api/claims", tags=["claims"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")

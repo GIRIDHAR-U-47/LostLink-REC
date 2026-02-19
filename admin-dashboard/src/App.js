@@ -9,6 +9,10 @@ import FoundItemsManagement from './pages/FoundItemsManagement';
 import LostItemsViewer from './pages/LostItemsViewer';
 import ClaimsManagement from './pages/ClaimsManagement';
 import Profile from './pages/Profile';
+import MatchingSupervision from './pages/MatchingSupervision';
+import HandoverRecords from './pages/HandoverRecords';
+import Broadcast from './pages/Broadcast';
+import ActivityLogs from './pages/ActivityLogs';
 import Login from './pages/Login';
 
 const App = () => {
@@ -51,10 +55,19 @@ const App = () => {
     };
 
     if (!userToken) {
-        return <Login onLoginSuccess={(token, info) => {
-            setUserToken(token);
-            setUserInfo(info);
-        }} />;
+        return (
+            <Router>
+                <div className="login-root">
+                    <Routes>
+                        <Route path="/login" element={<Login onLoginSuccess={(token, info) => {
+                            setUserToken(token);
+                            setUserInfo(info);
+                        }} />} />
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                    </Routes>
+                </div>
+            </Router>
+        );
     }
 
     return (
@@ -69,8 +82,14 @@ const App = () => {
                             <Route path="/found-items" element={<FoundItemsManagement />} />
                             <Route path="/lost-items" element={<LostItemsViewer />} />
                             <Route path="/claims" element={<ClaimsManagement />} />
+                            <Route path="/matches" element={<MatchingSupervision />} />
+                            <Route path="/handovers" element={<HandoverRecords />} />
+                            <Route path="/broadcast" element={<Broadcast />} />
+                            <Route path="/logs" element={<ActivityLogs />} />
                             <Route path="/profile" element={<Profile />} />
+                            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                     </div>
                 </div>
