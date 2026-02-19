@@ -19,6 +19,11 @@ class ItemBase(BaseModel):
     verified_by: Optional[str] = None  # Admin user ID who verified
     verified_by_name: Optional[str] = None # Admin Name who verified
     verified_at: Optional[datetime] = None
+    # Handover fields
+    handed_over_by: Optional[str] = None
+    handed_over_by_name: Optional[str] = None
+    handed_over_to_student_id: Optional[str] = None
+    handed_over_at: Optional[datetime] = None
 
 class ItemCreate(ItemBase):
     pass

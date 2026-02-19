@@ -16,6 +16,12 @@ const LostItemsViewer = () => {
     const [storageLocation, setStorageLocation] = useState('');
     const [remarks, setRemarks] = useState('');
     const [updating, setUpdating] = useState(false);
+    const [showHandoverModal, setShowHandoverModal] = useState(false);
+    const [handoverData, setHandoverData] = useState({
+        student_id: '',
+        admin_name: '',
+        remarks: ''
+    });
 
     const fetchItems = useCallback(async () => {
         setLoading(true);
@@ -64,6 +70,23 @@ const LostItemsViewer = () => {
         } catch (error) {
             console.error('Update failed:', error);
             alert('Failed to update item: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleHandover = async (e) => {
+        e.preventDefault();
+        const itemId = selectedItem.id || selectedItem._id;
+        setUpdating(true);
+        try {
+            await adminService.handoverItem(itemId, handoverData);
+            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'RETURNED' } : item));
+            setShowHandoverModal(false);
+            setSelectedItem(null);
+            alert('Physical handover recorded successfully!');
+        } catch (error) {
+            alert('Handover Failed: ' + (error.response?.data?.detail || error.message));
         } finally {
             setUpdating(false);
         }
@@ -485,7 +508,8 @@ const LostItemsViewer = () => {
                                                 cursor: storageLocation ? 'pointer' : 'not-allowed',
                                                 opacity: updating || !storageLocation ? 0.7 : 1,
                                                 transition: 'all 0.3s',
-                                                fontSize: '16px'
+                                                fontSize: '16px',
+                                                marginBottom: '15px'
                                             }}
                                         >
                                             {updating ? 'Processing...' : selectedItem.storage_location ? 'Update Details' : 'Verify & Set Available'}
@@ -501,12 +525,31 @@ const LostItemsViewer = () => {
                                                 borderRadius: '12px',
                                                 fontWeight: '600',
                                                 cursor: 'pointer',
-                                                transition: 'all 0.3s'
+                                                transition: 'all 0.3s',
+                                                marginBottom: '15px'
                                             }}
                                         >
                                             Dismiss
                                         </button>
                                     </div>
+
+                                    {(selectedItem.status === 'AVAILABLE' || selectedItem.status === 'CLAIMED') && (
+                                        <button
+                                            onClick={() => {
+                                                setHandoverData({ ...handoverData, admin_name: '' });
+                                                setShowHandoverModal(true);
+                                            }}
+                                            style={{
+                                                width: '100%', padding: '16px',
+                                                backgroundColor: '#10b981', color: 'white',
+                                                border: 'none', borderRadius: '14px',
+                                                fontWeight: '800', cursor: 'pointer',
+                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                                            }}
+                                        >
+                                            🤝 Record Physical Handover
+                                        </button>
+                                    )}
 
                                     {selectedItem.storage_location && (
                                         <div style={{
@@ -525,6 +568,74 @@ const LostItemsViewer = () => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Physical Handover Modal */}
+            {showHandoverModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 2100, padding: '20px', backdropFilter: 'blur(8px)'
+                }}>
+                    <div style={{
+                        background: 'white', borderRadius: '24px', maxWidth: '450px', width: '100%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '25px 30px', backgroundColor: '#10b981', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ margin: 0, fontWeight: '700' }}>Confirm Handover</h2>
+                            <button onClick={() => setShowHandoverModal(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+                        </div>
+                        <form onSubmit={handleHandover} style={{ padding: '30px' }}>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0fdf4', borderRadius: '12px', fontSize: '13px', color: '#166534' }}>
+                                You are about to mark this item as <strong>Returned</strong>. This requires physical verification of the student.
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>STUDENT ID / REGISTER NO</label>
+                                <input
+                                    type="text"
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="e.g. 21BE001"
+                                    value={handoverData.student_id}
+                                    onChange={(e) => setHandoverData({ ...handoverData, student_id: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>ADMIN SIGNATURE (NAME)</label>
+                                <input
+                                    type="text"
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="Your full name"
+                                    value={handoverData.admin_name}
+                                    onChange={(e) => setHandoverData({ ...handoverData, admin_name: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div style={{ marginBottom: '25px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>HANDOVER REMARKS</label>
+                                <textarea
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="Verified ID card, student collected in person..."
+                                    value={handoverData.remarks}
+                                    onChange={(e) => setHandoverData({ ...handoverData, remarks: e.target.value })}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={updating}
+                                style={{
+                                    width: '100%', padding: '16px',
+                                    backgroundColor: '#10b981', color: 'white',
+                                    border: 'none', borderRadius: '12px',
+                                    fontWeight: '700', cursor: 'pointer'
+                                }}
+                            >
+                                {updating ? 'Saving...' : 'Finalize Handover'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

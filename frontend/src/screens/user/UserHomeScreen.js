@@ -9,11 +9,26 @@ const { width } = Dimensions.get('window');
 const UserHomeScreen = ({ navigation }) => {
     const { logout, userInfo } = useContext(AuthContext);
     const [stats, setStats] = useState({ myLost: 0, myClaims: 0, available: 0 });
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchStats();
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchStats();
+            fetchNotifications();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications/me');
+            const unread = res.data.filter(n => !n.read).length;
+            setUnreadNotifications(unread);
+        } catch (error) {
+            console.log('Error fetching notifications:', error);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -46,16 +61,29 @@ const UserHomeScreen = ({ navigation }) => {
                         <Text style={styles.headerSubtitle}>Rajalakshmi Engineering College</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                    <Text style={styles.logoutIcon}>➜</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Notifications')}
+                        style={[styles.logoutBtn, { marginRight: 10 }]}
+                    >
+                        <Text style={styles.logoutIcon}>🔔</Text>
+                        {unreadNotifications > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{unreadNotifications}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+                        <Text style={styles.logoutIcon}>➜</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView
                 contentContainerStyle={styles.container}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={fetchStats} />
+                    <RefreshControl refreshing={loading} onRefresh={() => { fetchStats(); fetchNotifications(); }} />
                 }
             >
 
@@ -307,6 +335,24 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: COLORS.textLight,
         textAlign: 'center',
+    },
+    badge: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        backgroundColor: '#FF4444',
+        borderRadius: 10,
+        width: 18,
+        height: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.primary,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });
 

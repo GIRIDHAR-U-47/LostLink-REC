@@ -15,6 +15,8 @@ class ItemStatus(str, Enum):
     CLAIMED = "CLAIMED"
     RESOLVED = "RESOLVED"
     RETURNED = "RETURNED"
+    ARCHIVED = "ARCHIVED"
+    DISPOSED = "DISPOSED"
     LOST = "LOST"
 
 class ClaimStatus(str, Enum):

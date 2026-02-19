@@ -38,6 +38,17 @@ async def login(
 
         print(f"Login successful for: {email}") # DEBUG LOG
         
+        if roles and "ADMIN" in roles:
+            await db["audit_logs"].insert_one({
+                "admin_id": str(user["_id"]),
+                "admin_name": user.get("name", "Unknown"),
+                "action": "LOGIN",
+                "target_type": "USER",
+                "target_id": str(user["_id"]),
+                "details": {"email": email, "ip": "N/A"},
+                "timestamp": timedelta(0) + datetime.utcnow()
+            })
+
         response_data = {
             "token": access_token,
             "accessToken": access_token, # details for compatibility

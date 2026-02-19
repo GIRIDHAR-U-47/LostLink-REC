@@ -9,6 +9,7 @@ const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [categoryStats, setCategoryStats] = useState(null);
     const [recoveryRate, setRecoveryRate] = useState(null);
+    const [recentLogs, setRecentLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -32,6 +33,13 @@ const Dashboard = () => {
                 setRecoveryRate(recoveryRes.data);
             } catch (e) {
                 console.error('Recovery rate fetch failed:', e);
+            }
+
+            try {
+                const logsRes = await adminService.getAuditLogs(5);
+                setRecentLogs(logsRes.data);
+            } catch (e) {
+                console.error('Audit logs fetch failed:', e);
             }
 
         } catch (error) {
@@ -106,7 +114,7 @@ const Dashboard = () => {
                     { label: 'Pending Verification', value: stats.pending_verification, color: '#f59e0b' },
                     { label: 'Available for Collection', value: stats.available_items, color: '#3b82f6' },
                     { label: 'Active Personnel Claims', value: stats.pending_claims, color: '#8b5cf6' },
-                    { label: 'Successfully Resolved', value: stats.returned_today, color: '#f97316' }
+                    { label: 'Successfully Resolved', value: stats.total_resolved, color: '#f97316' }
                 ].map((metric, i) => (
                     <div key={i} style={{
                         backgroundColor: 'white',
@@ -210,6 +218,38 @@ const Dashboard = () => {
                         <div style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: '600' }}>
                             Compiling recovery statistics...
                         </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Recent Activity Feed */}
+            <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderLeft: '4px solid #ef4444', paddingLeft: '15px' }}>
+                    <h3 style={{ margin: 0, color: '#1e293b', fontSize: '16px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Real-time Audit Stream</h3>
+                    <a href="/logs" style={{ fontSize: '12px', color: '#6c5ce7', fontWeight: '700', textDecoration: 'none', textTransform: 'uppercase' }}>View All Intelligence →</a>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {recentLogs.length > 0 ? recentLogs.map((log, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: log.action.includes('LOGIN') ? '#dcfce7' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: log.action.includes('LOGIN') ? '#166534' : '#b91c1c', fontSize: '14px', fontWeight: '800' }}>
+                                    {log.admin_name.charAt(0)}
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>
+                                        {log.admin_name} <span style={{ fontWeight: '400', color: '#64748b' }}>executed</span> {log.action.replace('_', ' ')}
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', marginTop: '2px' }}>
+                                        {new Date(log.timestamp).toLocaleTimeString()} • {log.target_type}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ fontSize: '11px', fontWeight: '800', backgroundColor: '#e2e8f0', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontFamily: 'monospace' }}>
+                                ID: {log.target_id.slice(-6)}
+                            </div>
+                        </div>
+                    )) : (
+                        <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '14px' }}>No recent activities detected.</div>
                     )}
                 </div>
             </div>

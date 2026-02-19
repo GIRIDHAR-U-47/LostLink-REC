@@ -16,6 +16,21 @@ const FoundItemsManagement = () => {
     const [storageLocation, setStorageLocation] = useState('');
     const [remarks, setRemarks] = useState('');
     const [updating, setUpdating] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newItem, setNewItem] = useState({
+        category: '',
+        description: '',
+        location: '',
+        storage_location: '',
+        admin_remarks: '',
+        image: null
+    });
+    const [showHandoverModal, setShowHandoverModal] = useState(false);
+    const [handoverData, setHandoverData] = useState({
+        student_id: '',
+        admin_name: '',
+        remarks: ''
+    });
 
     const fetchItems = useCallback(async () => {
         setLoading(true);
@@ -66,6 +81,83 @@ const FoundItemsManagement = () => {
         }
     };
 
+    const handleAddNewItem = async (e) => {
+        e.preventDefault();
+        if (!newItem.category || !newItem.location || !newItem.storage_location) {
+            alert('Category, Location, and Storage Slot are mandatory.');
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const formData = new FormData();
+            formData.append('category', newItem.category);
+            formData.append('description', newItem.description);
+            formData.append('location', newItem.location);
+            formData.append('storage_location', newItem.storage_location);
+            formData.append('admin_remarks', newItem.admin_remarks);
+            if (newItem.image) {
+                formData.append('image', newItem.image);
+            }
+
+            const response = await adminService.addFoundItem(formData);
+            setItems([response.data, ...items]);
+            setShowAddModal(false);
+            setNewItem({
+                category: '',
+                description: '',
+                location: '',
+                storage_location: '',
+                admin_remarks: '',
+                image: null
+            });
+            alert('Found item recorded and added to inventory!');
+        } catch (error) {
+            alert('Error: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleArchiveItem = async (itemId) => {
+        if (!window.confirm('Transfer this item to the long-term archive?')) return;
+        try {
+            await adminService.archiveItem(itemId);
+            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'ARCHIVED' } : item));
+            setSelectedItem(null);
+        } catch (error) {
+            alert('Error: ' + (error.response?.data?.detail || error.message));
+        }
+    };
+
+    const handleDisposeItem = async (itemId) => {
+        if (!window.confirm('Permanently mark this item as disposed?')) return;
+        try {
+            await adminService.disposeItem(itemId);
+            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'DISPOSED' } : item));
+            setSelectedItem(null);
+        } catch (error) {
+            alert('Error: ' + (error.response?.data?.detail || error.message));
+        }
+    };
+
+    const handleHandover = async (e) => {
+        e.preventDefault();
+        const itemId = selectedItem.id || selectedItem._id;
+        setUpdating(true);
+        try {
+            await adminService.handoverItem(itemId, handoverData);
+            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'RETURNED' } : item));
+            setShowHandoverModal(false);
+            setSelectedItem(null);
+            alert('Physical handover recorded successfully!');
+        } catch (error) {
+            alert('Handover Failed: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     const getRecencyLabel = (dateTime) => {
         const days = Math.floor((new Date() - new Date(dateTime)) / (1000 * 60 * 60 * 24));
         if (days === 0) return 'Today';
@@ -78,8 +170,28 @@ const FoundItemsManagement = () => {
         <div style={{ padding: '20px', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h1 style={{ margin: 0, color: '#2d3436', fontSize: '2.5rem', fontWeight: '800' }}>Found Items Management</h1>
-                <div style={{ color: '#636e72', fontWeight: '500' }}>
-                    {items.length} Discoveries Pending Action
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <div style={{ color: '#636e72', fontWeight: '500' }}>
+                        {items.length} Discoveries Tracked
+                    </div>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: '#00b894',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0, 184, 148, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        <span style={{ fontSize: '20px' }}>+</span> Log New Discovery
+                    </button>
                 </div>
             </div>
 
@@ -372,16 +484,225 @@ const FoundItemsManagement = () => {
 
                                     <button
                                         onClick={() => setSelectedItem(null)}
-                                        style={{ width: '100%', padding: '16px', background: '#f1f5f9', border: 'none', borderRadius: '14px', fontWeight: '600', color: '#475569', cursor: 'pointer' }}
+                                        style={{ width: '100%', padding: '16px', background: '#f1f5f9', border: 'none', borderRadius: '14px', fontWeight: '600', color: '#475569', cursor: 'pointer', marginBottom: '15px' }}
                                     >
                                         Dismiss
                                     </button>
+
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button
+                                            onClick={() => handleArchiveItem(selectedItem.id || selectedItem._id)}
+                                            style={{ flex: 1, padding: '12px', background: '#fef3c7', border: 'none', borderRadius: '10px', fontWeight: '600', color: '#d97706', cursor: 'pointer', fontSize: '12px' }}
+                                        >
+                                            Archive Item
+                                        </button>
+                                        <button
+                                            onClick={() => handleDisposeItem(selectedItem.id || selectedItem._id)}
+                                            style={{ flex: 1, padding: '12px', background: '#fee2e2', border: 'none', borderRadius: '10px', fontWeight: '600', color: '#dc2626', cursor: 'pointer', fontSize: '12px' }}
+                                        >
+                                            Dispose Item
+                                        </button>
+                                    </div>
+
+                                    {(selectedItem.status === 'AVAILABLE' || selectedItem.status === 'CLAIMED') && (
+                                        <button
+                                            onClick={() => {
+                                                setHandoverData({ ...handoverData, admin_name: '' }); // Reset or pre-fill
+                                                setShowHandoverModal(true);
+                                            }}
+                                            style={{
+                                                width: '100%', padding: '16px',
+                                                backgroundColor: '#10b981', color: 'white',
+                                                border: 'none', borderRadius: '14px',
+                                                fontWeight: '800', cursor: 'pointer',
+                                                marginTop: '15px',
+                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                                            }}
+                                        >
+                                            🤝 Record Physical Handover
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+            {/* Physical Handover Modal */}
+            {showHandoverModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 2100, padding: '20px', backdropFilter: 'blur(8px)'
+                }}>
+                    <div style={{
+                        background: 'white', borderRadius: '24px', maxWidth: '450px', width: '100%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '25px 30px', backgroundColor: '#10b981', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ margin: 0, fontWeight: '700' }}>Confirm Handover</h2>
+                            <button onClick={() => setShowHandoverModal(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+                        </div>
+                        <form onSubmit={handleHandover} style={{ padding: '30px' }}>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0fdf4', borderRadius: '12px', fontSize: '13px', color: '#166534' }}>
+                                You are about to mark this item as <strong>Returned</strong>. This requires physical verification of the student.
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>STUDENT ID / REGISTER NO</label>
+                                <input
+                                    type="text"
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="e.g. 21BE001"
+                                    value={handoverData.student_id}
+                                    onChange={(e) => setHandoverData({ ...handoverData, student_id: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>ADMIN SIGNATURE (NAME)</label>
+                                <input
+                                    type="text"
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="Your full name"
+                                    value={handoverData.admin_name}
+                                    onChange={(e) => setHandoverData({ ...handoverData, admin_name: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div style={{ marginBottom: '25px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>HANDOVER REMARKS</label>
+                                <textarea
+                                    style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                    placeholder="Verified ID card, student collected in person..."
+                                    value={handoverData.remarks}
+                                    onChange={(e) => setHandoverData({ ...handoverData, remarks: e.target.value })}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={updating}
+                                style={{
+                                    width: '100%', padding: '16px',
+                                    backgroundColor: '#10b981', color: 'white',
+                                    border: 'none', borderRadius: '12px',
+                                    fontWeight: '700', cursor: 'pointer'
+                                }}
+                            >
+                                {updating ? 'Saving...' : 'Finalize Handover'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Direct Found Item Entry Modal */}
+            <AddItemModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                newItem={newItem}
+                setNewItem={setNewItem}
+                onSubmit={handleAddNewItem}
+                updating={updating}
+            />
+        </div>
+    );
+};
+
+/* Component for Direct Found Item Entry */
+const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.7)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 2000, padding: '20px', backdropFilter: 'blur(8px)'
+        }}>
+            <div style={{
+                background: 'white', borderRadius: '24px', maxWidth: '500px', width: '100%',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden'
+            }}>
+                <div style={{ padding: '25px 30px', backgroundColor: '#00b894', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ margin: 0, fontWeight: '700' }}>Log Discovery</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+                </div>
+                <form onSubmit={onSubmit} style={{ padding: '30px' }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>CATEGORY</label>
+                        <select
+                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                            value={newItem.category}
+                            onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                            required
+                        >
+                            <option value="">Select Category</option>
+                            <option value="DEVICES">Devices</option>
+                            <option value="DOCUMENTS">Documents</option>
+                            <option value="ACCESSORIES">Accessories</option>
+                            <option value="KEYS">Keys</option>
+                            <option value="JEWELLERY">Jewellery</option>
+                            <option value="BOOKS">Books</option>
+                            <option value="OTHERS">Others</option>
+                        </select>
+                    </div>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>DESCRIPTION</label>
+                        <textarea
+                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', minHeight: '80px' }}
+                            placeholder="Visual details, labels, etc..."
+                            value={newItem.description}
+                            onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                        />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>FOUND AT</label>
+                            <input
+                                type="text"
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                placeholder="Location"
+                                value={newItem.location}
+                                onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>STORAGE SLOT</label>
+                            <input
+                                type="text"
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                placeholder="Box/Rack"
+                                value={newItem.storage_location}
+                                onChange={(e) => setNewItem({ ...newItem, storage_location: e.target.value })}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>EVIDENCE PHOTO</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
+                            style={{ fontSize: '12px' }}
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={updating}
+                        style={{
+                            width: '100%', padding: '16px',
+                            backgroundColor: '#00b894', color: 'white',
+                            border: 'none', borderRadius: '12px',
+                            fontWeight: '700', cursor: 'pointer'
+                        }}
+                    >
+                        {updating ? 'Syncing...' : 'Confirm Discovery'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
