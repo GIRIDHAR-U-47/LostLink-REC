@@ -232,12 +232,12 @@ const Dashboard = () => {
                     {recentLogs.length > 0 ? recentLogs.map((log, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: log.action.includes('LOGIN') ? '#dcfce7' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: log.action.includes('LOGIN') ? '#166534' : '#b91c1c', fontSize: '14px', fontWeight: '800' }}>
-                                    {log.admin_name.charAt(0)}
+                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: log.action?.includes('LOGIN') ? '#dcfce7' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: log.action?.includes('LOGIN') ? '#166534' : '#b91c1c', fontSize: '14px', fontWeight: '800' }}>
+                                    {log.admin_name?.charAt(0) || 'A'}
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>
-                                        {log.admin_name} <span style={{ fontWeight: '400', color: '#64748b' }}>executed</span> {log.action.replace('_', ' ')}
+                                        {log.admin_name || 'System'} <span style={{ fontWeight: '400', color: '#64748b' }}>executed</span> {log.action?.replace('_', ' ') || 'ACTION'}
                                     </div>
                                     <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', marginTop: '2px' }}>
                                         {new Date(log.timestamp).toLocaleTimeString()} • {log.target_type}
@@ -245,7 +245,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                             <div style={{ fontSize: '11px', fontWeight: '800', backgroundColor: '#e2e8f0', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontFamily: 'monospace' }}>
-                                ID: {log.target_id.slice(-6)}
+                                ID: {log.target_id ? log.target_id.slice(-6) : 'N/A'}
                             </div>
                         </div>
                     )) : (

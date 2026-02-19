@@ -335,6 +335,10 @@ async def get_audit_logs(
     cursor = db["audit_logs"].find().sort("timestamp", -1).limit(limit)
     logs = await cursor.to_list(length=limit)
     
+    # Convert ObjectId for serialization
+    for log in logs:
+        log["_id"] = str(log["_id"])
+    
     return logs
 
 # ============ NOTIFICATIONS ============
@@ -673,4 +677,7 @@ async def get_login_history(
     }).sort("timestamp", -1).limit(20)
     
     history = await cursor.to_list(length=20)
+    for entry in history:
+        entry["_id"] = str(entry["_id"])
+        
     return history

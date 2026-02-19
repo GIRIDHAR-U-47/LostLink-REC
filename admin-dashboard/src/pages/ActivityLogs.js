@@ -71,9 +71,9 @@ const ActivityLogs = () => {
                                         <td style={{ padding: '20px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' }}>
-                                                    {log.admin_name.charAt(0)}
+                                                    {log.admin_name?.charAt(0) || 'A'}
                                                 </div>
-                                                <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{log.admin_name}</span>
+                                                <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{log.admin_name || 'System'}</span>
                                             </div>
                                         </td>
                                         <td style={{ padding: '20px' }}>
@@ -81,22 +81,22 @@ const ActivityLogs = () => {
                                                 padding: '6px 12px',
                                                 borderRadius: '8px',
                                                 backgroundColor:
-                                                    log.action.includes('DELETE') || log.action.includes('DISPOSE') ? '#fef2f2' :
-                                                        log.action.includes('ASSIGN') || log.action.includes('HANDOVER') ? '#f0fdf4' : '#eff6ff',
+                                                    log.action?.includes('DELETE') || log.action?.includes('DISPOSE') ? '#fef2f2' :
+                                                        log.action?.includes('ASSIGN') || log.action?.includes('HANDOVER') ? '#f0fdf4' : '#eff6ff',
                                                 color:
-                                                    log.action.includes('DELETE') || log.action.includes('DISPOSE') ? '#b91c1c' :
-                                                        log.action.includes('ASSIGN') || log.action.includes('HANDOVER') ? '#166534' : '#1e40af',
+                                                    log.action?.includes('DELETE') || log.action?.includes('DISPOSE') ? '#b91c1c' :
+                                                        log.action?.includes('ASSIGN') || log.action?.includes('HANDOVER') ? '#166534' : '#1e40af',
                                                 fontSize: '11px',
                                                 fontWeight: '800'
                                             }}>
-                                                {log.action.replace('_', ' ')}
+                                                {log.action?.replace('_', ' ') || 'ACTION'}
                                             </span>
                                         </td>
                                         <td style={{ padding: '20px', fontSize: '13px', color: '#64748b' }}>
                                             <span style={{ fontWeight: '600', color: '#475569' }}>{log.target_type}</span>
                                             <span style={{ margin: '0 5px' }}>•</span>
                                             <code style={{ fontSize: '11px', backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
-                                                {log.target_id.slice(-8)}
+                                                {log.target_id ? log.target_id.slice(-8) : 'N/A'}
                                             </code>
                                         </td>
                                         <td style={{ padding: '20px' }}>
