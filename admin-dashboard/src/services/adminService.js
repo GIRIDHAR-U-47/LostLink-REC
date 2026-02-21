@@ -13,6 +13,7 @@ const adminService = {
 
     // Claims Management
     getClaimsByStatus: (status) => api.get('/claims/status', { params: status ? { status } : {} }),
+    getClaimsForItem: (itemId) => api.get(`/claims/item/${itemId}`),
     verifyClaim: (claimId, status, remarks) =>
         api.put(`/claims/${claimId}/verify?status=${status}`, { remarks }),
 
@@ -34,6 +35,8 @@ const adminService = {
     archiveItem: (itemId) => api.post(`/admin/items/${itemId}/archive`),
     disposeItem: (itemId) => api.post(`/admin/items/${itemId}/dispose`),
     sendBroadcast: (broadcastData) => api.post('/admin/broadcast', broadcastData),
+    getItemContext: (itemId) => api.get(`/admin/items/${itemId}/context`),
+    linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
 
     // Helpers
     getBaseUrl: () => 'http://127.0.0.1:8080'

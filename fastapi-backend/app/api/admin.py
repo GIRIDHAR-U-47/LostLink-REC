@@ -22,6 +22,9 @@ class HandoverRequest(BaseModel):
     admin_name: str
     remarks: Optional[str] = None
 
+class LinkItemRequest(BaseModel):
+    linked_item_id: str
+
 class BroadcastRequest(BaseModel):
     title: str
     message: str
@@ -200,8 +203,7 @@ async def admin_add_found_item(
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    import shutil
-    import os
+    from app.core.utils import generate_custom_id
     
     image_url = None
     if image:
@@ -212,6 +214,8 @@ async def admin_add_found_item(
              shutil.copyfileobj(image.file, file_object)
         image_url = f"static/images/{image.filename}"
     
+    found_id = generate_custom_id("FND")
+
     item_dict = {
         "type": ItemType.FOUND,
         "category": category,
@@ -225,7 +229,8 @@ async def admin_add_found_item(
         "user_id": str(current_user.id),
         "verified_by": str(current_user.id),
         "verified_by_name": current_user.name,
-        "verified_at": datetime.utcnow()
+        "verified_at": datetime.utcnow(),
+        "Found_ID": found_id
     }
     
     result = await db["items"].insert_one(item_dict)
@@ -643,6 +648,47 @@ async def assign_storage_location(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to assign storage: {str(e)}")
 
+@router.put("/items/{item_id}/link")
+async def link_items(
+    item_id: str,
+    link: LinkItemRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Link a LOST item with a FOUND item (mirror update)"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        id1 = ObjectId(item_id)
+        id2 = ObjectId(link.linked_item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+
+    # Verify items exist
+    item1 = await db["items"].find_one({"_id": id1})
+    item2 = await db["items"].find_one({"_id": id2})
+    
+    if not item1 or not item2:
+        raise HTTPException(status_code=404, detail="One or both items not found")
+
+    # Update both items to link them
+    await db["items"].update_one({"_id": id1}, {"$set": {"linked_item_id": link.linked_item_id}})
+    await db["items"].update_one({"_id": id2}, {"$set": {"linked_item_id": item_id}})
+
+    # Log action
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "ITEMS_LINKED",
+        "target_type": "ITEM",
+        "target_id": item_id,
+        "details": {"linked_with": link.linked_item_id, "item1_type": item1['type'], "item2_type": item2['type']},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"message": "Items linked successfully"}
+
 # ============ ADMIN PROFILE & LOGIN HISTORY ============
 
 @router.get("/profile")
@@ -681,3 +727,67 @@ async def get_login_history(
         entry["_id"] = str(entry["_id"])
         
     return history
+
+@router.get("/items/{item_id}/context")
+async def get_item_context(
+    item_id: str,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get full context for an item: itself, its link, and its claims"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+        
+    item = await db["items"].find_one({"_id": obj_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Convert item _id
+    item["_id"] = str(item["_id"])
+    
+    # Populate item reporter/owner
+    if "user_id" in item:
+        user = await db["users"].find_one({"_id": ObjectId(item["user_id"])})
+        if user:
+            user["_id"] = str(user["_id"])
+            item["user"] = user
+            
+    # Get Linked Item
+    linked_item = None
+    if item.get("linked_item_id"):
+        try:
+            linked_item = await db["items"].find_one({"_id": ObjectId(item["linked_item_id"])})
+            if linked_item:
+                linked_item["_id"] = str(linked_item["_id"])
+                # Populate linked item user
+                if "user_id" in linked_item:
+                    l_user = await db["users"].find_one({"_id": ObjectId(linked_item["user_id"])})
+                    if l_user:
+                        l_user["_id"] = str(l_user["_id"])
+                        linked_item["user"] = l_user
+        except:
+            pass
+            
+    # Get Claims
+    claims_cursor = db["claims"].find({"item_id": item_id})
+    claims = await claims_cursor.to_list(length=50)
+    
+    for c in claims:
+        c["_id"] = str(c["_id"])
+        # Populate claimant
+        if c.get("claimant_id"):
+            c_user = await db["users"].find_one({"_id": ObjectId(c["claimant_id"])})
+            if c_user:
+                c_user["_id"] = str(c_user["_id"])
+                c["claimant"] = c_user
+                
+    return {
+        "item": item,
+        "linked_item": linked_item,
+        "claims": claims
+    }

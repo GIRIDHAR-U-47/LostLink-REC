@@ -13,6 +13,10 @@ class ItemBase(BaseModel):
     date_time: datetime = Field(alias="dateTime", validation_alias="dateTime", serialization_alias="dateTime")
     image_url: Optional[str] = Field(None, alias="imageUrl", validation_alias="imageUrl", serialization_alias="imageUrl")
     status: ItemStatus = ItemStatus.OPEN
+    # Custom IDs
+    lost_id: Optional[str] = Field(None, alias="Lost_ID", serialization_alias="Lost_ID")
+    found_id: Optional[str] = Field(None, alias="Found_ID", serialization_alias="Found_ID")
+    
     # Admin fields
     storage_location: Optional[str] = None  # e.g., "Rack A, Shelf 3"
     admin_remarks: Optional[str] = None
@@ -24,6 +28,9 @@ class ItemBase(BaseModel):
     handed_over_by_name: Optional[str] = None
     handed_over_to_student_id: Optional[str] = None
     handed_over_at: Optional[datetime] = None
+    
+    # Connection fields
+    linked_item_id: Optional[str] = None # ID of the associated Lost/Found item
 
 class ItemCreate(ItemBase):
     pass

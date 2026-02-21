@@ -1,3 +1,5 @@
+import os
+import shutil
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Form, UploadFile, File
 from typing import List, Optional
 from datetime import datetime
@@ -19,8 +21,7 @@ async def submit_claim(
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
-    import shutil
-    import os
+    from app.core.utils import generate_custom_id
     
     # Verify item exists
     item = await db["items"].find_one({"_id": ObjectId(item_id)})
@@ -40,13 +41,16 @@ async def submit_claim(
         # Store relative path for database
         image_url = f"static/images/claims/{proof_image.filename}"
 
+    claim_id = generate_custom_id("CLM")
+
     claim_dict = {
         "item_id": item_id,
         "verificationDetails": verification_details,
         "proofImageUrl": image_url,
         "claimant_id": str(current_user.id),
         "status": "PENDING",
-        "submissionDate": datetime.utcnow()
+        "submissionDate": datetime.utcnow(),
+        "Claim_ID": claim_id
     }
     
     result = await db["claims"].insert_one(claim_dict)

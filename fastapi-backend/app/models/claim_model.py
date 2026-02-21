@@ -11,6 +11,7 @@ class ClaimBase(BaseModel):
     verification_details: Optional[str] = Field(None, alias="verificationDetails", serialization_alias="verificationDetails")
     status: ClaimStatus = ClaimStatus.PENDING
     admin_remarks: Optional[str] = Field(None, alias="adminRemarks", serialization_alias="adminRemarks")
+    claim_id: Optional[str] = Field(None, alias="Claim_ID", serialization_alias="Claim_ID")
 
 class ClaimCreate(ClaimBase):
     item_id: str
