@@ -82,8 +82,9 @@ async def get_item_feed(
         "status": {"$in": ["PENDING", "OPEN", "AVAILABLE"]}
     }
     
-    if current_user.role != Role.ADMIN:
-        query["user_id"] = {"$ne": str(current_user.id)}
+    # Relaxed filter: Everyone can see all active items in the feed
+    # if current_user.role != Role.ADMIN:
+    #     query["user_id"] = {"$ne": str(current_user.id)}
 
     cursor = db["items"].find(query).sort("dateTime", -1)
     items = await cursor.to_list(length=100)
@@ -109,8 +110,9 @@ async def get_found_items(
         "status": {"$in": ["PENDING", "AVAILABLE"]}
     }
     
-    if current_user.role != Role.ADMIN:
-        query["user_id"] = {"$ne": str(current_user.id)}
+    # Relaxed filter: Everyone can see all FOUND items in the feed
+    # if current_user.role != Role.ADMIN:
+    #     query["user_id"] = {"$ne": str(current_user.id)}
 
     cursor = db["items"].find(query).sort("dateTime", -1)
     items = await cursor.to_list(length=100)
@@ -131,23 +133,63 @@ async def get_my_requests(
 ):
     # 1. Items reported by the user
     items_cursor = db["items"].find({"user_id": str(current_user.id)}).sort("dateTime", -1)
-    items = await items_cursor.to_list(length=100)
+    reported_items = await items_cursor.to_list(length=100)
+    
+    for item in reported_items:
+        item["is_report"] = True
+        # For reports, check if there are any claims so we can show the reporter 'how they claimed'
+        item_id_str = str(item["_id"])
+        claim = await db["claims"].find_one(
+            {"item_id": item_id_str, "status": "APPROVED"}
+        )
+        if not claim:
+            # If no approved claim, show the most recent pending one
+            claim = await db["claims"].find_one(
+                {"item_id": item_id_str},
+                sort=[("submissionDate", -1)]
+            )
+            
+        if claim:
+            item["user_claim"] = {
+                "verificationDetails": claim.get("verificationDetails"),
+                "proofImageUrl": claim.get("proofImageUrl"),
+                "status": claim.get("status"),
+                "submissionDate": claim.get("submissionDate"),
+                "Claim_ID": claim.get("Claim_ID"),
+                "claimant_name": "Applicant" # Could fetch actual name if needed
+            }
     
     # 2. Items claimed by the user (but not reported by them)
-    # We find claims from this user and fetch the corresponding items
     claims_cursor = db["claims"].find({"claimant_id": str(current_user.id)})
     claims = await claims_cursor.to_list(length=100)
     
-    claimed_item_ids = [ObjectId(c["item_id"]) for c in claims if "item_id" in c]
+    claim_map = {str(c["item_id"]): c for c in claims}
+    claimed_item_ids = [ObjectId(item_id) for item_id in claim_map.keys()]
     
-    # Filter out items already in the list (reported by user)
-    reported_item_ids = [ObjectId(str(i["_id"])) for i in items]
-    new_item_ids = [id for id in claimed_item_ids if id not in reported_item_ids]
+    # Filter out items already in the reported list
+    reported_item_ids = [str(i["_id"]) for i in reported_items]
+    new_item_ids = [id for id in claimed_item_ids if str(id) not in reported_item_ids]
+    
+    items = list(reported_items)
     
     if new_item_ids:
         claimed_items_cursor = db["items"].find({"_id": {"$in": new_item_ids}})
         claimed_items = await claimed_items_cursor.to_list(length=100)
-        items.extend(claimed_items)
+        
+        for item in claimed_items:
+            item_id_str = str(item["_id"])
+            if item_id_str in claim_map:
+                claim = claim_map[item_id_str]
+                # Populate user_claim with specific details
+                item["user_claim"] = {
+                    "verificationDetails": claim.get("verificationDetails"),
+                    "proofImageUrl": claim.get("proofImageUrl"),
+                    "status": claim.get("status"),
+                    "submissionDate": claim.get("submissionDate"),
+                    "Claim_ID": claim.get("Claim_ID")
+                }
+            item["is_claim"] = True
+            items.append(item)
         
     # Final sort
     items.sort(key=lambda x: x["dateTime"], reverse=True)

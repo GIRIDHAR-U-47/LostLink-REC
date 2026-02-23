@@ -42,6 +42,9 @@ class ItemInDB(ItemBase):
 class ItemResponse(ItemBase):
     id: Optional[PyObjectId] = Field(validation_alias="_id", default=None)
     user: Optional[UserResponse] = None # Populated user details
+    user_claim: Optional[dict] = None # Details of user's claim if applicable
+    is_report: Optional[bool] = False # Flag item as user's report
+    is_claim: Optional[bool] = False # Flag item as user's claim
 
     class Config:
         populate_by_name = True

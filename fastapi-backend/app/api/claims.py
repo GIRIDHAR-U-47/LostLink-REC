@@ -201,6 +201,21 @@ async def verify_claim(
                 {"$set": {"status": ItemStatus.CLAIMED}} # Required mandatory physical handover
             )
             
+            # Send notification to claimant
+            item = await db["items"].find_one({"_id": ObjectId(claim["item_id"])})
+            storage_info = f" at {item.get('storage_location')}" if item and item.get('storage_location') else ""
+            
+            notification_data = {
+                "user_id": str(claim["claimant_id"]),
+                "title": "Claim Approved! 🎉",
+                "message": f"Your claim for {item.get('category', 'item') if item else 'an item'} has been approved. Please collect it{storage_info}.",
+                "type": "CLAIM_APPROVED",
+                "related_id": str(claim["item_id"]),
+                "read": False,
+                "created_at": datetime.utcnow()
+            }
+            await db["notifications"].insert_one(notification_data)
+            
     updated_claim = await db["claims"].find_one({"_id": ObjectId(id)})
     
     # Audit Log
