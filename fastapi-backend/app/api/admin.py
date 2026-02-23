@@ -16,6 +16,7 @@ router = APIRouter()
 class StorageAssignment(BaseModel):
     storage_location: str
     admin_remarks: Optional[str] = None
+    status: Optional[str] = None
 
 class HandoverRequest(BaseModel):
     student_id: str
@@ -607,7 +608,7 @@ async def assign_storage_location(
         "verified_by": str(current_user.id),
         "verified_by_name": current_user.name,
         "verified_at": datetime.utcnow(),
-        "status": "AVAILABLE"  # Automatically verified
+        "status": assignment.status if assignment.status else ItemStatus.AVAILABLE
     }
     
     if assignment.admin_remarks:
@@ -791,3 +792,80 @@ async def get_item_context(
         "linked_item": linked_item,
         "claims": claims
     }
+@router.post("/items/{item_id}/notify-owner")
+async def notify_lost_item_owner(
+    item_id: str,
+    payload: dict = Body(None),
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Notify the owner of a LOST item that a match has been found.
+    Updates status to AVAILABLE and sends a notification with optional remarks.
+    """
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+        
+    item = await db["items"].find_one({"_id": obj_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    if item["type"] != ItemType.LOST:
+        raise HTTPException(status_code=400, detail="Only LOST items can be notified to owners")
+
+    remarks = payload.get("remarks") if payload else None
+    
+    update_dict = {
+        "status": ItemStatus.AVAILABLE,
+        "verified_at": datetime.utcnow(),
+        "verified_by": str(current_user.id),
+        "verified_by_name": current_user.name
+    }
+    
+    if remarks:
+        update_dict["admin_remarks"] = remarks
+    elif not item.get("admin_remarks"):
+        update_dict["admin_remarks"] = "Match found! Please visit Lost & Found office for collection."
+
+    # Update status
+    await db["items"].update_one(
+        {"_id": obj_id},
+        {"$set": update_dict}
+    )
+    
+    # Send notification to the user who reported the lost item
+    if item.get("user_id"):
+        msg = f"A matching item for your lost {item.get('category', 'item')} has been found."
+        if remarks:
+             msg += f" Note: {remarks}"
+        else:
+             msg += " Please visit the L&F office for collection."
+
+        notification = {
+            "user_id": str(item["user_id"]),
+            "title": "Great News! Item Found 🎁",
+            "message": msg,
+            "type": "MATCH_FOUND",
+            "related_id": item_id,
+            "read": False,
+            "created_at": datetime.utcnow()
+        }
+        await db["notifications"].insert_one(notification)
+
+    # Audit Log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "OWNER_NOTIFIED",
+        "target_type": "ITEM",
+        "target_id": item_id,
+        "details": {"status_to": "AVAILABLE", "remarks_included": bool(remarks)},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"message": "Owner notified successfully"}

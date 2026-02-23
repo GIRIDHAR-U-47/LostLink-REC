@@ -20,6 +20,7 @@ const AdminLostItemsScreen = ({ navigation }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [itemContext, setItemContext] = useState(null);
     const [updating, setUpdating] = useState(false);
+    const [adminRemarks, setAdminRemarks] = useState('');
 
     const searchItems = useCallback(async () => {
         setLoading(true);
@@ -44,6 +45,7 @@ const AdminLostItemsScreen = ({ navigation }) => {
         setSelectedItem(item);
         setShowDetailModal(true);
         setItemContext(null);
+        setAdminRemarks(item.admin_remarks || '');
 
         try {
             const contextRes = await adminAPI.getItemContext(item.id || item._id);
@@ -64,6 +66,20 @@ const AdminLostItemsScreen = ({ navigation }) => {
             searchItems();
         } catch (error) {
             Alert.alert('Error', 'Failed to link items');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleNotifyOwner = async () => {
+        setUpdating(true);
+        try {
+            await adminAPI.notifyOwner(selectedItem.id || selectedItem._id, adminRemarks);
+            Alert.alert('Success', 'Owner notified successfully');
+            searchItems();
+            setShowDetailModal(false);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to notify owner');
         } finally {
             setUpdating(false);
         }
@@ -200,7 +216,30 @@ const AdminLostItemsScreen = ({ navigation }) => {
                                         </View>
                                     )}
 
+                                    <View style={styles.detailSection}>
+                                        <Text style={styles.sectionLabel}>ADMIN REMARKS (NOTIFIED TO OWNER)</Text>
+                                        <TextInput
+                                            style={styles.remarksInput}
+                                            placeholder="Add notes for the owner (e.g. 'Found at Canteen, please collect')"
+                                            multiline
+                                            value={adminRemarks}
+                                            onChangeText={setAdminRemarks}
+                                        />
+                                    </View>
+
                                     <View style={styles.actionSection}>
+                                        {selectedItem.status !== 'HANDED_OVER' && selectedItem.status !== 'AVAILABLE' && (
+                                            <TouchableOpacity
+                                                style={[styles.actionBtn, { backgroundColor: COLORS.success, marginBottom: 12 }]}
+                                                onPress={handleNotifyOwner}
+                                                disabled={updating}
+                                            >
+                                                <Text style={styles.actionBtnText}>
+                                                    {updating ? 'Sending...' : '🔔 Notify Owner (Found Match)'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+
                                         <TouchableOpacity
                                             style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}
                                             onPress={() => {
@@ -456,6 +495,17 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    remarksInput: {
+        backgroundColor: '#f1f5f9',
+        borderRadius: 12,
+        padding: 12,
+        minHeight: 80,
+        fontSize: 14,
+        color: '#1e293b',
+        textAlignVertical: 'top',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
     }
 });
 

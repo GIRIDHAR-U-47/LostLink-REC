@@ -24,10 +24,13 @@ const MyRequestsScreen = ({ navigation }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'PENDING': return '#ffc107'; // Keep status colors standard or map to theme if desired
+            case 'PENDING': return '#ffc107';
             case 'APPROVED': return COLORS.success;
-            case 'RETURNED': return COLORS.primary; // Or a specific blue if needed
+            case 'AVAILABLE': return COLORS.success;
+            case 'RETURNED': return COLORS.primary;
             case 'RESOLVED': return COLORS.info || '#17a2b8';
+            case 'LOST': return COLORS.error;
+            case 'OPEN': return COLORS.info;
             default: return COLORS.textLight;
         }
     };
@@ -134,6 +137,14 @@ const MyRequestsScreen = ({ navigation }) => {
                                 )}
                             </View>
                         )}
+                    </View>
+                )}
+
+                {item.status === 'AVAILABLE' && (
+                    <View style={[styles.matchAlert, { backgroundColor: COLORS.success + '15' }]}>
+                        <Text style={[styles.matchAlertText, { color: COLORS.success }]}>
+                            ✨ Your item has been found! Please visit the Lost & Found office during working hours for collection.
+                        </Text>
                     </View>
                 )}
 
@@ -404,6 +415,20 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         textAlign: 'center',
         marginTop: 8,
+    },
+    matchAlert: {
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 15,
+        borderWidth: 1,
+        borderColor: COLORS.success + '30',
+        borderStyle: 'dashed',
+    },
+    matchAlertText: {
+        fontSize: 13,
+        fontWeight: '600',
+        textAlign: 'center',
+        lineHeight: 18,
     },
 });
 

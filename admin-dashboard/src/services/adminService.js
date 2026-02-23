@@ -8,8 +8,12 @@ const adminService = {
 
     // Item Management
     searchItems: (params) => api.get('/admin/items/search', { params }),
-    assignStorage: (itemId, storageLocation, adminRemarks) =>
-        api.put(`/admin/items/${itemId}/assign-storage`, { storage_location: storageLocation, admin_remarks: adminRemarks }),
+    assignStorage: (itemId, storageLocation, adminRemarks, status) =>
+        api.put(`/admin/items/${itemId}/assign-storage`, {
+            storage_location: storageLocation,
+            admin_remarks: adminRemarks,
+            status: status
+        }),
 
     // Claims Management
     getClaimsByStatus: (status) => api.get('/claims/status', { params: status ? { status } : {} }),
@@ -37,6 +41,7 @@ const adminService = {
     sendBroadcast: (broadcastData) => api.post('/admin/broadcast', broadcastData),
     getItemContext: (itemId) => api.get(`/admin/items/${itemId}/context`),
     linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
+    notifyOwner: (itemId, remarks) => api.post(`/admin/items/${itemId}/notify-owner`, { remarks }),
 
     // Helpers
     getBaseUrl: () => 'http://127.0.0.1:8080'
