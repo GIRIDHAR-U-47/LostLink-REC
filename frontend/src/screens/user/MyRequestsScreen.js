@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import api from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
@@ -9,10 +9,10 @@ const MyRequestsScreen = ({ navigation }) => {
 
     const fetchMyRequests = async () => {
         try {
-            const response = await api.get('/items/my-requests');
+            const response = await api.get('/items/feed');
             setItems(response.data);
         } catch (error) {
-            console.log('Error fetching my requests', error);
+            console.log('Error fetching activity feed', error);
         } finally {
             setLoading(false);
         }
@@ -44,6 +44,9 @@ const MyRequestsScreen = ({ navigation }) => {
             </View>
 
             <Text style={styles.category}>{item.category}</Text>
+            <Text style={styles.trackingId}>
+                ID: {item.Lost_ID || item.Found_ID || (item.id || item._id).substring(0, 8).toUpperCase()}
+            </Text>
             <Text style={styles.date}>{new Date(item.dateTime).toLocaleDateString()}</Text>
             {item.imageUrl ? (
                 <Image
@@ -76,37 +79,29 @@ const MyRequestsScreen = ({ navigation }) => {
                 </View>
             )}
 
-            {item.type === 'FOUND' && item.status === 'AVAILABLE' && (
-                <View style={[styles.adminSection, { backgroundColor: '#e8f5e9', borderTopColor: '#c8e6c9' }]}>
-                    <Text style={[styles.adminTitle, { color: '#2e7d32' }]}>Verified Status</Text>
-                    <Text style={styles.storageText}>
-                        <Text style={{ fontWeight: 'bold' }}>Status:</Text> Handed over to Admin
-                    </Text>
-                    {item.verified_by_name && (
-                        <Text style={styles.storageText}>
-                            <Text style={{ fontWeight: 'bold' }}>Received by:</Text> {item.verified_by_name}
-                        </Text>
-                    )}
-                    <Text style={styles.instructionText}>
-                        Thank you for your honesty! The item is now safe with the admin desk.
-                    </Text>
-                </View>
+            {item.type === 'FOUND' && item.status !== 'CLAIMED' && (
+                <TouchableOpacity
+                    style={styles.claimButton}
+                    onPress={() => navigation.navigate('ClaimItem', { item })}
+                >
+                    <Text style={styles.claimButtonText}>This is mine!</Text>
+                </TouchableOpacity>
             )}
         </View>
     );
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>My Activity</Text>
+            <Text style={styles.header}>Activity Feed</Text>
             {loading ? (
                 <ActivityIndicator size="large" color={COLORS.primary} />
             ) : (
                 <FlatList
                     data={items}
                     renderItem={renderItem}
-                    keyExtractor={item => item.id.toString()}
+                    keyExtractor={item => (item.id || item._id).toString()}
                     contentContainerStyle={styles.list}
-                    ListEmptyComponent={<Text style={styles.emptyText}>You haven't reported anything yet.</Text>}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No items reported in the feed yet.</Text>}
                 />
             )}
         </View>
@@ -171,6 +166,13 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginBottom: 5,
     },
+    trackingId: {
+        fontSize: 11,
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
     description: {
         color: COLORS.textLight, // Assuming 555 is textLight/medium gray
         marginBottom: 5,
@@ -185,6 +187,18 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginTop: 10,
         marginBottom: 10,
+    },
+    claimButton: {
+        backgroundColor: COLORS.primary,
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    claimButtonText: {
+        color: COLORS.white,
+        fontWeight: 'bold',
+        fontSize: 16,
     },
     emptyText: {
         textAlign: 'center',

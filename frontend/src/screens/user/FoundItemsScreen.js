@@ -10,10 +10,10 @@ const FoundItemsScreen = ({ navigation }) => {
 
     const fetchItems = async () => {
         try {
-            const response = await api.get('/items/found');
+            const response = await api.get('/items/feed');
             setItems(response.data);
         } catch (error) {
-            console.log('Error fetching found items', error);
+            console.log('Error fetching feed', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -32,18 +32,38 @@ const FoundItemsScreen = ({ navigation }) => {
     const renderItem = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
-                <Text style={styles.category}>{item.category}</Text>
+                <View>
+                    <Text style={[styles.type, { color: item.type === 'LOST' ? COLORS.error : COLORS.success }]}>
+                        {item.type}
+                    </Text>
+                    <Text style={styles.category}>{item.category}</Text>
+                </View>
                 <Text style={styles.date}>{new Date(item.dateTime).toLocaleDateString()}</Text>
             </View>
+
+            {item.imageUrl ? (
+                <Image
+                    source={{ uri: `http://10.234.72.182:8080/${item.imageUrl}` }}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                />
+            ) : null}
+
             <Text style={styles.location}>📍 {item.location}</Text>
             <Text style={styles.description}>{item.description}</Text>
 
-            <TouchableOpacity
-                style={styles.claimButton}
-                onPress={() => navigation.navigate('ClaimItem', { item })}
-            >
-                <Text style={styles.claimButtonText}>This is mine!</Text>
-            </TouchableOpacity>
+            {item.type === 'FOUND' ? (
+                <TouchableOpacity
+                    style={styles.claimButton}
+                    onPress={() => navigation.navigate('ClaimItem', { item })}
+                >
+                    <Text style={styles.claimButtonText}>This is mine!</Text>
+                </TouchableOpacity>
+            ) : (
+                <View style={[styles.statusBadge, { backgroundColor: COLORS.error + '20' }]}>
+                    <Text style={[styles.statusText, { color: COLORS.error }]}>Searching for Owner</Text>
+                </View>
+            )}
         </View>
     );
 
@@ -56,9 +76,9 @@ const FoundItemsScreen = ({ navigation }) => {
                 <FlatList
                     data={items}
                     renderItem={renderItem}
-                    keyExtractor={item => item.id.toString()}
+                    keyExtractor={item => (item.id || item._id).toString()}
                     contentContainerStyle={styles.list}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No found items reported yet.</Text>}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No items reported in the feed yet.</Text>}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
@@ -104,6 +124,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.primary,
     },
+    type: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
     date: {
         color: COLORS.textLight,
         fontSize: 12,
@@ -126,6 +152,15 @@ const styles = StyleSheet.create({
     claimButtonText: {
         color: COLORS.white,
         fontWeight: 'bold',
+    },
+    statusBadge: {
+        padding: 8,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    statusText: {
+        fontWeight: 'bold',
+        fontSize: 12,
     },
     itemImage: {
         width: '100%',

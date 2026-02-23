@@ -132,6 +132,26 @@ const AdminHomeScreen = ({ navigation }) => {
                             </View>
                         </TouchableOpacity>
 
+                        <View style={styles.gridRow}>
+                            <TouchableOpacity
+                                style={[styles.miniCard, { backgroundColor: '#ede9fe' }]}
+                                onPress={() => navigation.navigate('AdminBroadcast')}
+                            >
+                                <Text style={styles.miniCardIcon}>📢</Text>
+                                <Text style={styles.miniCardTitle}>Broadcast</Text>
+                                <Text style={styles.miniCardSub}>Campus Alert</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.miniCard, { backgroundColor: '#f1f5f9' }]}
+                                onPress={() => navigation.navigate('AdminProfile')}
+                            >
+                                <Text style={styles.miniCardIcon}>⚙️</Text>
+                                <Text style={styles.miniCardTitle}>Audit Logs</Text>
+                                <Text style={styles.miniCardSub}>Security Profile</Text>
+                            </TouchableOpacity>
+                        </View>
+
                         {/* Remove bottom logout as it's now in header */}
                     </>
                 ) : null}
@@ -306,6 +326,37 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 12,
         fontWeight: 'bold',
+    },
+    gridRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+        marginBottom: 30,
+    },
+    miniCard: {
+        width: '48%',
+        padding: 20,
+        borderRadius: 24,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    miniCardIcon: {
+        fontSize: 24,
+        marginBottom: 10,
+    },
+    miniCardTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1e293b',
+    },
+    miniCardSub: {
+        fontSize: 11,
+        color: '#64748b',
+        fontWeight: '600',
+        marginTop: 2,
     },
     loader: {
         marginTop: 50,

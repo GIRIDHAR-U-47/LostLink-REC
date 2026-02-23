@@ -4,7 +4,7 @@
     align-items: center;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(135deg, #671B95 40%, #4A148C 70%, #2E1065 100%);
+    background: linear-gradient(135deg, #2E1065 50%, #4A148C 20%, #671B95 70%);
     position: fixed;
     top: 0;
     left: 0;

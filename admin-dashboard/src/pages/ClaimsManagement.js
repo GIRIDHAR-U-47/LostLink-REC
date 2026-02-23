@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 
 const ClaimsManagement = () => {
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const itemId = queryParams.get('id');
+
     const [claims, setClaims] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedClaim, setSelectedClaim] = useState(null);
@@ -15,7 +20,12 @@ const ClaimsManagement = () => {
     const fetchClaims = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await adminService.getClaimsByStatus(filters.status);
+            let response;
+            if (itemId) {
+                response = await adminService.getClaimsForItem(itemId);
+            } else {
+                response = await adminService.getClaimsByStatus(filters.status);
+            }
             console.log('Claims API Response:', response.data);
             setClaims(response.data || []);
         } catch (error) {
@@ -25,11 +35,11 @@ const ClaimsManagement = () => {
                 url: error.config?.url,
                 headers: error.config?.headers
             });
-            alert('Claims Fetch Failed: ' + error.message + '\n\nPlease check if the backend is running and you have internet/local connection.');
+            alert('Claims Fetch Failed: ' + error.message);
         } finally {
             setLoading(false);
         }
-    }, [filters.status]);
+    }, [filters.status, itemId]);
 
     useEffect(() => {
         fetchClaims();
@@ -78,6 +88,30 @@ const ClaimsManagement = () => {
                 <button className="search-button" onClick={fetchClaims}>Refresh</button>
             </div>
 
+            {itemId && (
+                <div style={{
+                    backgroundColor: '#e0f2fe',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    border: '1px solid #7dd3fc',
+                    color: '#0369a1'
+                }}>
+                    <div style={{ fontWeight: '600' }}>
+                        📍 Showing claims for Item ID: <span style={{ fontFamily: 'monospace', background: '#fff', padding: '2px 6px', borderRadius: '4px' }}>{itemId}</span>
+                    </div>
+                    <button
+                        onClick={() => window.location.href = '/admin/claims'}
+                        style={{ background: '#fff', border: '1px solid #0284c7', color: '#0284c7', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                    >
+                        Clear Filter
+                    </button>
+                </div>
+            )}
+
             {/* Claims Table */}
             {loading ? (
                 <div className="loading">Loading claims...</div>
@@ -102,7 +136,8 @@ const ClaimsManagement = () => {
                                 <tr key={claim.id || claim._id}>
                                     <td>
                                         <div className="item-name">{claim.item?.category || 'Unknown Item'}</div>
-                                        <div className="item-id">ID: {claim.item?.id || claim.item?._id}</div>
+                                        <div style={{ fontSize: '12px', color: '#666', fontWeight: 'bold', margin: '4px 0' }}>CLAIM ID: {claim.Claim_ID || (claim.id || claim._id).substring(0, 8).toUpperCase()}</div>
+                                        <div className="item-id">Item ID: {claim.item?.Lost_ID || claim.item?.Found_ID || (claim.item?.id || claim.item?._id)?.substring(0, 8)}</div>
                                     </td>
                                     <td>
                                         <div className="claimant-name">{claim.claimant?.name || 'Unknown User'}</div>
@@ -163,7 +198,15 @@ const ClaimsManagement = () => {
                         maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto'
                     }}>
                         <div style={{ marginBottom: '20px' }}>
-                            <h4>Item Details</h4>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h4>Item Details</h4>
+                                <button
+                                    onClick={() => window.location.href = `/admin/found-items?search=${selectedClaim.item?.Found_ID}`}
+                                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6c5ce7', background: '#fff', color: '#6c5ce7', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                                >
+                                    View Asset Case
+                                </button>
+                            </div>
                             <p><strong>Category:</strong> {selectedClaim.item?.category || 'N/A'}</p>
                             <p><strong>Description:</strong> {selectedClaim.item?.description || 'N/A'}</p>
                             {(selectedClaim.item?.imageUrl || selectedClaim.item?.image_url) && (

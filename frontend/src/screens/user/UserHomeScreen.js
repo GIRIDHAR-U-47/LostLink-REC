@@ -130,7 +130,7 @@ const UserHomeScreen = ({ navigation }) => {
                         onPress={() => navigation.navigate('FoundItems')}
                     >
                         <Text style={styles.secondaryBtnIcon}>👁</Text>
-                        <Text style={styles.secondaryBtnText}>Browse Items</Text>
+                        <Text style={styles.secondaryBtnText}>L&F Feed</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity

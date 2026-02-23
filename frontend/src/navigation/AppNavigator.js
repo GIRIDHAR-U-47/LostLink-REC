@@ -25,6 +25,7 @@ import AdminClaimsScreen from '../screens/admin/AdminClaimsScreen';
 import AdminLostItemsScreen from '../screens/admin/AdminLostItemsScreen';
 import AdminNotificationsScreen from '../screens/admin/AdminNotificationsScreen';
 import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
+import AdminBroadcastScreen from '../screens/admin/AdminBroadcastScreen';
 
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
@@ -58,6 +59,7 @@ const AdminNavigator = () => (
         <AdminStack.Screen name="AdminClaims" component={AdminClaimsScreen} options={{ title: 'Manage Claims' }} />
         <AdminStack.Screen name="AdminNotifications" component={AdminNotificationsScreen} options={{ title: 'Notifications' }} />
         <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} options={{ title: 'Profile & Logs' }} />
+        <AdminStack.Screen name="AdminBroadcast" component={AdminBroadcastScreen} options={{ title: 'Global Broadcast' }} />
     </AdminStack.Navigator>
 );
 

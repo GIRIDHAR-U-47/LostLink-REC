@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 
 const LostItemsViewer = () => {
+    const location = useLocation();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -12,16 +14,77 @@ const LostItemsViewer = () => {
         dateFrom: '',
         dateTo: ''
     });
+
+    // Check for search param on mount
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const searchVal = params.get('search');
+        if (searchVal) {
+            setSearchQuery(searchVal);
+        }
+    }, [location]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [storageLocation, setStorageLocation] = useState('');
     const [remarks, setRemarks] = useState('');
     const [updating, setUpdating] = useState(false);
     const [showHandoverModal, setShowHandoverModal] = useState(false);
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [potentialLinks, setPotentialLinks] = useState([]);
+    const [context, setContext] = useState(null);
+    const [fetchingContext, setFetchingContext] = useState(false);
     const [handoverData, setHandoverData] = useState({
         student_id: '',
         admin_name: '',
         remarks: ''
     });
+
+    const fetchContext = async (itemId) => {
+        if (!itemId) return;
+        setFetchingContext(true);
+        try {
+            const response = await adminService.getItemContext(itemId);
+            setContext(response.data);
+        } catch (error) {
+            console.error('Error fetching item context:', error);
+        } finally {
+            setFetchingContext(false);
+        }
+    };
+
+    const handleLinkItem = async (foundItemId) => {
+        if (!selectedItem || !foundItemId) return;
+        setUpdating(true);
+        try {
+            const currentId = selectedItem.id || selectedItem._id;
+            await adminService.linkItems(currentId, foundItemId);
+            setShowLinkModal(false);
+            alert('Items linked successfully!');
+            fetchContext(currentId);
+            fetchItems();
+        } catch (error) {
+            alert('Linking failed: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const openLinkModal = async () => {
+        setShowLinkModal(true);
+        setUpdating(true);
+        try {
+            // Search for AVAILABLE/PENDING FOUND items in same category
+            const response = await adminService.searchItems({
+                item_type: 'FOUND',
+                status: 'AVAILABLE',
+                category: selectedItem.category
+            });
+            setPotentialLinks(response.data || []);
+        } catch (error) {
+            console.error('Error fetching potential links:', error);
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     const fetchItems = useCallback(async () => {
         setLoading(true);
@@ -234,9 +297,11 @@ const LostItemsViewer = () => {
                                 position: 'relative'
                             }}
                             onClick={() => {
+                                const id = item.id || item._id;
                                 setSelectedItem(item);
                                 setStorageLocation(item.storage_location || '');
                                 setRemarks(item.admin_remarks || '');
+                                fetchContext(id);
                             }}
                             onMouseOver={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-8px)';
@@ -304,6 +369,9 @@ const LostItemsViewer = () => {
                                 </div>
 
                                 <h3 style={{ margin: '0 0 10px 0', color: '#2d3436', fontSize: '1.2rem' }}>{item.category}</h3>
+                                <div style={{ fontSize: '11px', color: '#b2bec3', fontWeight: 'bold', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                                    REPORT ID: {item.Lost_ID || (item.id || item._id).substring(0, 8).toUpperCase()}
+                                </div>
                                 <p style={{
                                     color: '#636e72',
                                     fontSize: '14px',
@@ -393,180 +461,175 @@ const LostItemsViewer = () => {
 
                         {/* Modal Body */}
                         <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                                {/* Left Side: Details */}
-                                <div>
-                                    <div style={{ marginBottom: '24px' }}>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#b2bec3', textTransform: 'uppercase', marginBottom: '8px' }}>Images/Visuals</label>
-                                        {(selectedItem.imageUrl || selectedItem.image_url) ? (
-                                            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                                                <img
-                                                    src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl || selectedItem.image_url}`}
-                                                    alt={selectedItem.category}
-                                                    style={{ width: '100%', height: '240px', objectFit: 'cover' }}
-                                                />
+                            {fetchingContext ? (
+                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Reconstructing Case History...</div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
+                                    {/* Left Side: Media & Context */}
+                                    <div>
+                                        <div style={{ marginBottom: '24px' }}>
+                                            {(selectedItem.imageUrl || selectedItem.image_url) ? (
+                                                <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                                                    <img
+                                                        src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl || selectedItem.image_url}`}
+                                                        alt={selectedItem.category}
+                                                        style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div style={{
+                                                    height: '200px',
+                                                    backgroundColor: '#f8fafc',
+                                                    borderRadius: '16px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '2px dashed #e2e8f0',
+                                                    flexDirection: 'column'
+                                                }}>
+                                                    <span style={{ fontSize: '40px' }}>📦</span>
+                                                    <p style={{ color: '#94a3b8', fontSize: '14px' }}>No Image Evidence</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
+                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Report ID</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#1e293b' }}>{selectedItem.Lost_ID || 'N/A'}</div>
                                             </div>
-                                        ) : (
-                                            <div style={{
-                                                height: '180px',
-                                                backgroundColor: '#f8f9fa',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '2px dashed #dfe6e9'
-                                            }}>
-                                                <div style={{ textAlign: 'center', color: '#b2bec3' }}>
-                                                    <div style={{ fontSize: '32px' }}>📷</div>
-                                                    <p>No Image Provided</p>
+                                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
+                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Report Status</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7' }}>{selectedItem.status}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Owner Details */}
+                                        <div style={{ backgroundColor: '#f1f5f9', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
+                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px' }}>👤 Owner Information</h4>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>FULL NAME</div>
+                                                    <div style={{ fontWeight: '600', fontSize: '13px' }}>{selectedItem.user?.name || 'Unknown'}</div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>ROLL / REGISTRATION</div>
+                                                    <div style={{ fontWeight: '600', fontSize: '13px' }}>{selectedItem.user?.registerNumber || selectedItem.user?.register_number || 'N/A'}</div>
+                                                </div>
+                                                <div style={{ gridColumn: 'span 2' }}>
+                                                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>EMAIL CONTACT</div>
+                                                    <div style={{ fontWeight: '600', fontSize: '13px' }}>{selectedItem.user?.email || 'N/A'}</div>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4 style={{ margin: '0 0 15px 0', color: '#2d3436' }}>Discovery Info</h4>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                            <div style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '10px' }}>
-                                                <span style={{ fontSize: '11px', color: '#b2bec3', fontWeight: '700' }}>CATEGORY</span>
-                                                <div style={{ fontWeight: '600', color: '#2d3436' }}>{selectedItem.category}</div>
-                                            </div>
-                                            <div style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '10px' }}>
-                                                <span style={{ fontSize: '11px', color: '#b2bec3', fontWeight: '700' }}>STATUS</span>
-                                                <div style={{ fontWeight: '600', color: '#6c5ce7' }}>{selectedItem.status || 'PENDING'}</div>
-                                            </div>
+                                        {/* Linked Found Item */}
+                                        <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '2px dashed #e2e8f0' }}>
+                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px' }}>🔎 Resolved by Discovery</h4>
+                                            {context?.linked_item ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: '#ecfdf5', padding: '12px', borderRadius: '10px' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontSize: '10px', color: '#047857', fontWeight: '800' }}>LINKED FOUND ITEM</div>
+                                                        <div style={{ fontWeight: '700', color: '#064e3b' }}>{context.linked_item.Found_ID || 'ID-FOUND'}</div>
+                                                        <div style={{ fontSize: '12px', color: '#10b981' }}>Category: {context.linked_item.category}</div>
+                                                    </div>
+                                                    <button onClick={() => window.location.href = `/admin/found-items?search=${context.linked_item.Found_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6ee7b7', background: '#fff', color: '#059669', fontSize: '12px', cursor: 'pointer' }}>View Asset</button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '10px' }}>No matching discovery linked.</p>
+                                                    <button onClick={openLinkModal} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#00b894', color: 'white', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>Link Found Item</button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '10px' }}>
-                                            <span style={{ fontSize: '11px', color: '#b2bec3', fontWeight: '700' }}>REPORTER DETAILS</span>
-                                            <div style={{ marginTop: '5px', color: '#2d3436', fontWeight: '600' }}>{selectedItem.user?.name || 'Anonymous'}</div>
-                                            <div style={{ fontSize: '13px', color: '#636e72', marginTop: '3px' }}>Reg No: {selectedItem.user?.registerNumber || selectedItem.user?.register_number || 'N/A'}</div>
-                                            <div style={{ fontSize: '13px', color: '#636e72' }}>{selectedItem.user?.email || 'N/A'}</div>
+                                    {/* Right Side: Actions */}
+                                    <div>
+                                        <div style={{ marginBottom: '25px' }}>
+                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#1e293b', fontSize: '14px' }}>Administrative Control</h4>
+
+                                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+                                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '8px' }}>ADMIN REMARKS</label>
+                                                <textarea
+                                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', minHeight: '100px', fontSize: '13px' }}
+                                                    placeholder="Add verification notes about ownership or potential leads..."
+                                                    value={remarks}
+                                                    onChange={(e) => setRemarks(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
+                                                <button
+                                                    onClick={() => alert('Sending notification to owner...')}
+                                                    style={{ padding: '14px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                                                >
+                                                    📧 Notify Owner
+                                                </button>
+                                                <button
+                                                    onClick={() => handleUpdateItem()}
+                                                    style={{ padding: '14px', background: '#6c5ce7', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                                                >
+                                                    Mark Resolved
+                                                </button>
+                                            </div>
+
+                                            {context?.linked_item && (
+                                                <div style={{ marginTop: '30px' }}>
+                                                    <h5 style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 10px 0', textTransform: 'uppercase' }}>Physical Handover Logic</h5>
+                                                    <button
+                                                        onClick={() => setShowHandoverModal(true)}
+                                                        style={{ width: '100%', padding: '16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
+                                                    >
+                                                        🤝 Record Handover
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                                {/* Right Side: Actions */}
-                                <div>
-                                    <h4 style={{ margin: '0 0 20px 0', color: '#2d3436', borderLeft: '4px solid #6c5ce7', paddingLeft: '12px' }}>Administrative Actions</h4>
-
-                                    <p style={{ fontSize: '14px', color: '#636e72', marginBottom: '20px' }}>
-                                        Assign a storage location and add remarks to transition this item to <strong>AVAILABLE</strong> status. This will notify the user where to collect it.
-                                    </p>
-
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#2d3436', marginBottom: '8px' }}>Location</label>
-                                        <input
-                                            type="text"
-                                            style={{
-                                                width: '100%',
-                                                padding: '14px',
-                                                borderRadius: '10px',
-                                                border: '1px solid #dfe6e9',
-                                                fontSize: '15px',
-                                                backgroundColor: '#fdfdfd'
-                                            }}
-                                            placeholder="e.g. Student care Office, Student care"
-                                            value={storageLocation}
-                                            onChange={(e) => setStorageLocation(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: '25px' }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#2d3436', marginBottom: '8px' }}>Admin Remarks</label>
-                                        <textarea
-                                            style={{
-                                                width: '100%',
-                                                padding: '14px',
-                                                borderRadius: '10px',
-                                                border: '1px solid #dfe6e9',
-                                                fontSize: '15px',
-                                                minHeight: '120px',
-                                                resize: 'vertical',
-                                                backgroundColor: '#fdfdfd'
-                                            }}
-                                            placeholder="Add instructions or details for the user..."
-                                            value={remarks}
-                                            onChange={(e) => setRemarks(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '15px' }}>
-                                        <button
-                                            onClick={handleUpdateItem}
-                                            disabled={updating || !storageLocation}
-                                            style={{
-                                                flex: 2,
-                                                padding: '16px',
-                                                backgroundColor: '#00b894',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '12px',
-                                                fontWeight: '700',
-                                                cursor: storageLocation ? 'pointer' : 'not-allowed',
-                                                opacity: updating || !storageLocation ? 0.7 : 1,
-                                                transition: 'all 0.3s',
-                                                fontSize: '16px',
-                                                marginBottom: '15px'
-                                            }}
-                                        >
-                                            {updating ? 'Processing...' : selectedItem.storage_location ? 'Update Details' : 'Verify & Set Available'}
-                                        </button>
-                                        <button
-                                            onClick={() => setSelectedItem(null)}
-                                            style={{
-                                                flex: 1,
-                                                padding: '16px',
-                                                backgroundColor: '#f1f2f6',
-                                                color: '#2d3436',
-                                                border: 'none',
-                                                borderRadius: '12px',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s',
-                                                marginBottom: '15px'
-                                            }}
-                                        >
-                                            Dismiss
-                                        </button>
-                                    </div>
-
-                                    {(selectedItem.status === 'AVAILABLE' || selectedItem.status === 'CLAIMED') && (
-                                        <button
-                                            onClick={() => {
-                                                setHandoverData({ ...handoverData, admin_name: '' });
-                                                setShowHandoverModal(true);
-                                            }}
-                                            style={{
-                                                width: '100%', padding: '16px',
-                                                backgroundColor: '#10b981', color: 'white',
-                                                border: 'none', borderRadius: '14px',
-                                                fontWeight: '800', cursor: 'pointer',
-                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-                                            }}
-                                        >
-                                            🤝 Record Physical Handover
-                                        </button>
-                                    )}
-
-                                    {selectedItem.storage_location && (
-                                        <div style={{
-                                            marginTop: '20px',
-                                            padding: '15px',
-                                            backgroundColor: '#e3f2fd',
-                                            borderRadius: '10px',
-                                            borderLeft: '4px solid #1e88e5'
-                                        }}>
-                                            <div style={{ fontSize: '12px', color: '#1e88e5', fontWeight: '800', marginBottom: '4px' }}>CURRENT ASSIGNMENT</div>
-                                            <div style={{ fontSize: '14px', color: '#0d47a1' }}>
-                                                Currently stored at: <strong>{selectedItem.storage_location}</strong>
-                                            </div>
+            {/* Link Item Modal */}
+            {showLinkModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 2200, padding: '20px', backdropFilter: 'blur(8px)'
+                }}>
+                    <div style={{
+                        background: 'white', borderRadius: '24px', maxWidth: '500px', width: '100%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '25px 30px', backgroundColor: '#00b894', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ margin: 0, fontWeight: '700', fontSize: '18px' }}>Link Discovery to Report</h2>
+                            <button onClick={() => setShowLinkModal(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '20px', maxHeight: '400px', overflowY: 'auto' }}>
+                            {potentialLinks.length === 0 ? (
+                                <p style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>No available found items matching this category.</p>
+                            ) : (
+                                potentialLinks.map(link => (
+                                    <div key={link.id || link._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
+                                        <div>
+                                            <div style={{ fontWeight: '700', fontSize: '14px' }}>{link.Found_ID}</div>
+                                            <div style={{ fontSize: '12px', color: '#64748b' }}>Location: {link.location}</div>
+                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(link.dateTime).toLocaleDateString()}</div>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
+                                        <button
+                                            onClick={() => handleLinkItem(link.id || link._id)}
+                                            style={{ padding: '8px 16px', background: '#00b894', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+                                        >
+                                            Link
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
