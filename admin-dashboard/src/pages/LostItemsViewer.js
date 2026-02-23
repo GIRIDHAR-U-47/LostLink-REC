@@ -313,6 +313,11 @@ const LostItemsViewer = () => {
                                 setSelectedItem(item);
                                 setStorageLocation(item.storage_location || '');
                                 setRemarks(item.admin_remarks || '');
+                                setHandoverData({
+                                    student_id: item.user?.registerNumber || item.user?.register_number || '',
+                                    admin_name: '',
+                                    remarks: ''
+                                });
                                 fetchContext(id);
                             }}
                             onMouseOver={(e) => {
@@ -590,7 +595,7 @@ const LostItemsViewer = () => {
                                                     {updating ? 'Processing...' : '📧 Notify Owner'}
                                                 </button>
                                                 <button
-                                                    onClick={() => handleUpdateItem()}
+                                                    onClick={() => selectedItem.status === 'AVAILABLE' ? setShowHandoverModal(true) : handleUpdateItem()}
                                                     disabled={updating}
                                                     style={{
                                                         padding: '14px',
@@ -603,11 +608,11 @@ const LostItemsViewer = () => {
                                                         cursor: updating ? 'not-allowed' : 'pointer'
                                                     }}
                                                 >
-                                                    {updating ? 'Updating...' : (selectedItem.status === 'AVAILABLE' ? 'Mark as Returned' : 'Mark Resolved')}
+                                                    {updating ? 'Updating...' : (selectedItem.status === 'AVAILABLE' ? '🤝 Record Handover' : 'Mark Resolved')}
                                                 </button>
                                             </div>
 
-                                            {context?.linked_item && (
+                                            {(context?.linked_item || selectedItem.status === 'AVAILABLE') && (
                                                 <div style={{ marginTop: '30px' }}>
                                                     <h5 style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 10px 0', textTransform: 'uppercase' }}>Physical Handover Logic</h5>
                                                     <button
