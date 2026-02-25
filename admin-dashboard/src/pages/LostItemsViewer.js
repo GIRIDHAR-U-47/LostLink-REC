@@ -113,22 +113,34 @@ const LostItemsViewer = () => {
         fetchItems();
     };
 
+    const handleNotifyOwner = async () => {
+        if (!selectedItem) return;
+        setUpdating(true);
+        try {
+            const itemId = selectedItem.id || selectedItem._id;
+            await adminService.notifyOwner(itemId, remarks);
+            alert('Owner notified successfully with your remarks!');
+            fetchItems();
+            setSelectedItem(null);
+        } catch (error) {
+            console.error('Notify failed:', error);
+            alert('Failed to notify owner: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     const handleUpdateItem = async () => {
         if (!selectedItem) return;
 
         setUpdating(true);
         try {
             const itemId = selectedItem.id || selectedItem._id;
-            await adminService.assignStorage(itemId, storageLocation, remarks);
+            const nextStatus = selectedItem.status === 'AVAILABLE' ? 'RETURNED' : 'AVAILABLE';
+            await adminService.assignStorage(itemId, storageLocation, remarks, nextStatus);
 
-            // Refresh local state
-            setItems(prevItems => prevItems.map(item =>
-                (item.id === itemId || item._id === itemId)
-                    ? { ...item, storage_location: storageLocation, admin_remarks: remarks, status: 'AVAILABLE' }
-                    : item
-            ));
-
-            alert('Item updated successfully! Status set to AVAILABLE.');
+            alert(`Item updated successfully! Status set to ${nextStatus}.`);
+            fetchItems();
             setSelectedItem(null);
         } catch (error) {
             console.error('Update failed:', error);
@@ -301,6 +313,11 @@ const LostItemsViewer = () => {
                                 setSelectedItem(item);
                                 setStorageLocation(item.storage_location || '');
                                 setRemarks(item.admin_remarks || '');
+                                setHandoverData({
+                                    student_id: item.user?.registerNumber || item.user?.register_number || '',
+                                    admin_name: '',
+                                    remarks: ''
+                                });
                                 fetchContext(id);
                             }}
                             onMouseOver={(e) => {
@@ -561,20 +578,41 @@ const LostItemsViewer = () => {
 
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
                                                 <button
-                                                    onClick={() => alert('Sending notification to owner...')}
-                                                    style={{ padding: '14px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                                                    onClick={handleNotifyOwner}
+                                                    disabled={updating}
+                                                    style={{
+                                                        padding: '14px',
+                                                        background: updating ? '#f1f2f6' : '#fff',
+                                                        border: '1px solid #6c5ce7',
+                                                        color: '#6c5ce7',
+                                                        borderRadius: '10px',
+                                                        fontSize: '13px',
+                                                        fontWeight: '700',
+                                                        cursor: updating ? 'not-allowed' : 'pointer',
+                                                        opacity: updating ? 0.7 : 1
+                                                    }}
                                                 >
-                                                    📧 Notify Owner
+                                                    {updating ? 'Processing...' : '📧 Notify Owner'}
                                                 </button>
                                                 <button
-                                                    onClick={() => handleUpdateItem()}
-                                                    style={{ padding: '14px', background: '#6c5ce7', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                                                    onClick={() => selectedItem.status === 'AVAILABLE' ? setShowHandoverModal(true) : handleUpdateItem()}
+                                                    disabled={updating}
+                                                    style={{
+                                                        padding: '14px',
+                                                        background: updating ? '#a29bfe' : '#6c5ce7',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '10px',
+                                                        fontSize: '13px',
+                                                        fontWeight: '700',
+                                                        cursor: updating ? 'not-allowed' : 'pointer'
+                                                    }}
                                                 >
-                                                    Mark Resolved
+                                                    {updating ? 'Updating...' : (selectedItem.status === 'AVAILABLE' ? '🤝 Record Handover' : 'Mark Resolved')}
                                                 </button>
                                             </div>
 
-                                            {context?.linked_item && (
+                                            {(context?.linked_item || selectedItem.status === 'AVAILABLE') && (
                                                 <div style={{ marginTop: '30px' }}>
                                                     <h5 style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 10px 0', textTransform: 'uppercase' }}>Physical Handover Logic</h5>
                                                     <button

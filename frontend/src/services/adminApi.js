@@ -68,7 +68,8 @@ export const adminAPI = {
   disposeItem: (itemId) => api.post(`/admin/items/${itemId}/dispose`),
   sendBroadcast: (broadcastData) => api.post('/admin/broadcast', broadcastData),
   getItemContext: (itemId) => api.get(`/admin/items/${itemId}/context`),
-  linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId })
+  linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
+  notifyOwner: (itemId, remarks) => api.post(`/admin/items/${itemId}/notify-owner`, { remarks })
 };
 
 export default adminAPI;
