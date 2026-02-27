@@ -2,6 +2,8 @@
 
 Welcome to the internal logic documentation for **REC LostLink**. This guide is designed to help developers, administrators, and new contributors understand the underlying workflows, data structures, and state transitions that power the ecosystem.
 
+
+
 ---
 
 ## 🌊 1. High-Level Workflow
