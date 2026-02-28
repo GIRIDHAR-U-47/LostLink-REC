@@ -29,7 +29,7 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
   <tr>
     <td align="center" valign="top" width="33.33%">
       <b>Admin Panel</b><br><sub>Management</sub><br>
-      <img src="docs/assets/filter-stack-bottomsheet-white.jpg" width="40%" align="middle" alt="Light" />&nbsp;│&nbsp;<img src="docs/assets/filter-stack-bottomsheet-black.jpg" width="40%" align="middle" alt="Dark" />
+      <img src="docs/assets/admin.png" width="40%" align="middle" alt="Light" />
     </td>
     <td align="center" valign="top" width="33.33%">
       <b>Splash Screen</b><br><sub>Branding</sub><br>
