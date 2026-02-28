@@ -1,105 +1,75 @@
-# Admin Access Setup - Complete ✓
+﻿# Admin Setup
 
-## Navigation Flow
+This guide matches the current admin implementation in `frontend/src/screens/admin` and backend `/api/admin` routes.
 
-The app uses **role-based navigation**:
+## Admin Access
+Admin login requires an account with role `ADMIN`.
 
-```
-Login → Check User Role (roles array)
-         ↓
-    Role = ADMIN? ✓ → Admin Dashboard
-    Role = USER?  ✓ → User Dashboard
-```
-
-### AppNavigator.js Logic
-```javascript
-userInfo?.roles?.includes('ADMIN') ? <AdminNavigator /> : <UserNavigator />
-```
-
-## Admin Dashboard Structure
-
-### AdminHomeScreen
-- **Path**: `/screens/admin/AdminHomeScreen.js`
-- **Shows**: Dashboard with pending/returned stats and navigation cards
-- **Navigation Options**:
-  - Manage Found Items
-  - View Lost Reports  
-  - Manage Claims
-  - Logout
-
-### AdminFoundItemsScreen
-- **Path**: `/screens/admin/AdminFoundItemsScreen.js`
-- **Fetches**: `/api/items/found` (FOUND items with PENDING status)
-- **Actions**: Confirm receipt to mark items as APPROVED
-- **Endpoint**: PUT `/api/items/{id}/status`
-
-### AdminClaimsScreen  
-- **Path**: `/screens/admin/AdminClaimsScreen.js`
-- **Fetches**: `/api/claims/status?status=PENDING` (pending ownership claims)
-- **Actions**: Approve or Reject claims
-- **Endpoint**: PUT `/api/claims/{id}/verify?status={APPROVED|REJECTED}`
-
-## Admin Test Credentials
-
-**✓ Admin User Created in MongoDB**
-
-```
-Email:    admin@rec.edu.in
-Password: admin123
-Role:     ADMIN
-Name:     Student Care Admin
-```
-
-## How to Test
-
-### 1. Start Mobile App (Expo)
-```bash
-cd frontend
-npm start
-# or
-expo start
-```
-
-### 2. Login with Admin Credentials
+Default seeded admin:
 - Email: `admin@rec.edu.in`
 - Password: `admin123`
 
-### 3. App Automatically Routes to Admin Dashboard
-- Shows AdminHomeScreen
-- Can navigate to ManageFoundItems or ManageClaims
-- Can logout
+## Role-Based Navigation
+In mobile app (`frontend/src/navigation/AppNavigator.js`):
+- If roles include `ADMIN` or `ROLE_ADMIN` -> `AdminNavigator`
+- Else -> user navigator
 
-## API Endpoints for Admin (Backend)
+## Mobile Admin Screens
+- `AdminHomeScreen`
+- `AdminFoundItemsScreen`
+- `AdminLostItemsScreen`
+- `AdminClaimsScreen`
+- `AdminNotificationsScreen`
+- `AdminProfileScreen`
+- `AdminBroadcastScreen`
 
-All require Bearer token with ADMIN role:
+## Admin API Endpoints Used
+### Dashboard
+- `GET /api/admin/stats/dashboard`
+- `GET /api/admin/stats/category-breakdown`
+- `GET /api/admin/stats/recovery-rate`
 
-### Items Management
-- `GET /api/items/found` - List found items (PENDING)
-- `PUT /api/items/{id}/status` - Update item status (APPROVED/REJECTED)
-- `GET /api/items/lost` - List all lost items (admin only)
+### Item Management
+- `GET /api/admin/items/search`
+- `PUT /api/admin/items/{item_id}/assign-storage`
+- `POST /api/admin/items/found`
+- `GET /api/admin/items/{item_id}/context`
+- `PUT /api/admin/items/{item_id}/link`
+- `POST /api/admin/items/{item_id}/notify-owner`
+- `POST /api/admin/items/{item_id}/handover`
+- `POST /api/admin/items/{item_id}/archive`
+- `POST /api/admin/items/{item_id}/dispose`
 
-### Claims Management  
-- `GET /api/claims/status?status=PENDING` - Get pending claims
-- `PUT /api/claims/{id}/verify?status={APPROVED|REJECTED}` - Approve/Reject claim
+### Claims
+- `GET /api/claims/status`
+- `GET /api/claims/item/{item_id}`
+- `PUT /api/claims/{id}/verify?status=APPROVED|REJECTED`
 
-## Current Status
+### Notifications and Broadcast
+- `GET /api/admin/notifications`
+- `PUT /api/admin/notifications/{notification_id}/read`
+- `POST /api/admin/broadcast`
 
-✅ Navigation structure implemented
-✅ Admin role detection working
-✅ Admin credentials created
-✅ Admin screens designed
-✅ Backend API endpoints ready
+### Profile and Logs
+- `GET /api/admin/profile`
+- `GET /api/admin/login-history`
+- `GET /api/admin/audit-logs`
 
-**Admin panel is ready to use!**
+## Run Admin Flows
+1. Start backend:
+```bash
+cd fastapi-backend
+venv\Scripts\activate
+uvicorn main:app --reload --host 0.0.0.0 --port 8080
+```
+2. Start mobile app:
+```bash
+cd frontend
+npm start
+```
+3. Login with admin credentials.
+4. Open admin screens from Admin Home.
 
----
-> [!IMPORTANT]
-> **Disclaimer**: This project is developed by a student of Rajalakshmi Engineering College as part of the **Design Thinking and Innovation (DTI)** academic coursework.
->
-> This application is a student initiative and is **not** an official product of the college. It has been created solely for educational, research, and prototype purposes.
->
-> Any future real-world deployment within the campus will be subject to formal approval and authorization from the college administration.
->
-> The project does not claim ownership of institutional processes, branding, or authority and is intended only to demonstrate an innovative solution to a campus problem.
-
-
+## Important Config
+- Mobile app backend URL is in `frontend/src/services/api.js`.
+- Update it when your machine/LAN IP changes.
