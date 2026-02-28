@@ -4,7 +4,7 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
 ![Stars](https://img.shields.io/github/stars/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=github&color=FFD700) [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](https://opensource.org/licenses/MIT)
 
-## 🚀 Overview
+## Overview
 **REC LostLink** is a streamlined solution that drastically simplifies the lost and found reporting and claiming process within the REC campus. It offers a secure and centralized platform built to replace traditional manual tracking with modern efficiency.
 
 > **Disclaimer**: This student-developed project is a prototype created for educational purposes and is not yet an official product of the college.
@@ -14,7 +14,7 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 - **Admin Portal (Web)**: A modern **React** dashboard for campus admins to manage inventory and verify claims.
 - **Mobile App (Expo Go)**: A reliable **React Native** app allowing students to instantly report lost or found items with image evidence.
 
-## 🚥 Quick Start Guide
+## Quick Start Guide
 
 You can launch the complete ecosystem with our automated setup script on Windows!
 
@@ -60,7 +60,7 @@ npm start
 ```
 *❗ Very Important: To use the mobile app on a real device, open `frontend/src/services/api.js` and change `localhost` in the `BASE_URL` to your real WiFi IPv4 address, e.g., `http://192.168.1.10:8080/api`.*
 
-## 🔑 Demo Access
+## Demo Access
 
 **Roles** | **Email** | **Password**
 --- | --- | ---
@@ -68,7 +68,7 @@ npm start
 **Student** | `giri@rec.edu.in` | `student123`
 **Student** | `sai@rec.edu.in` | `student123`
 
-## 🩺 Quick Troubleshooting
+## Quick Troubleshooting
 
 - **Server Connection Failed?** Verify that your computer and mobile device are connected to the same Wi-Fi. Ensure the `BASE_URL` points directly to your PC's IP.
 - **Login Bug?** Delete `fastapi-backend/venv` and reinstall manually. Some bcrypt versions can clash.
