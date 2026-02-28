@@ -9,6 +9,40 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
 > **Disclaimer**: This student-developed project is a prototype created for educational purposes and is not yet an official product of the college.
 
+## Gallery
+
+<table width="100%">
+  <tr>
+    <td align="center" valign="top" width="33.33%">
+      <b>Home</b><br><sub>App overview</sub><br>
+      <img src="docs/assets/H1.jpg" width="40%" align="middle" alt="Light" />
+    </td>
+    <td align="center" valign="top" width="33.33%">
+      <b>Report Item</b><br><sub>Lost & Found Forms</sub><br>
+      <img src="docs/assets/R1.jpg" width="40%" align="middle" alt="Light" />&nbsp;│&nbsp;<img src="docs/assets/R2.jpg" width="40%" align="middle" alt="Dark" />
+    </td>
+    <td align="center" valign="top" width="33.33%">
+      <b>My Activity</b><br><sub>Tracking Status</sub><br>
+      <img src="docs/assets/T1.jpg" width="40%" align="middle" alt="Light" />&nbsp;│&nbsp;<img src="docs/assets/T2.jpg" width="40%" align="middle" alt="Dark" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33.33%">
+      <b>Admin Panel</b><br><sub>Management</sub><br>
+      <img src="docs/assets/filter-stack-bottomsheet-white.jpg" width="40%" align="middle" alt="Light" />&nbsp;│&nbsp;<img src="docs/assets/filter-stack-bottomsheet-black.jpg" width="40%" align="middle" alt="Dark" />
+    </td>
+    <td align="center" valign="top" width="33.33%">
+      <b>Splash Screen</b><br><sub>Branding</sub><br>
+      <img src="docs/assets/S1.jpg" width="40%" align="middle" alt="Light" />
+    </td>
+    <td align="center" valign="top" width="33.33%">
+      <b>Login</b><br><sub>Auth Screen</sub><br>
+      <img src="docs/assets/L1.jpg" width="40%" align="middle" alt="Light" />&nbsp;│&nbsp;<img src="docs/assets/L2.jpg" width="40%" align="middle" alt="Dark" />
+    </td>
+  </tr>
+</table>
+
+
 ## 🛠 Features & Tech Stack
 - **Backend (Python)**: High-performance API using **FastAPI**, with **MongoDB** for flexible data storage.
 - **Admin Portal (Web)**: A modern **React** dashboard for campus admins to manage inventory and verify claims.
