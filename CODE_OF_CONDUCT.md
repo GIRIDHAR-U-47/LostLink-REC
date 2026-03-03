@@ -1,4 +1,4 @@
-# Contributor Covenant Code of Conduct
+﻿# Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
@@ -54,5 +54,3 @@ This Code of Conduct is adapted from the [Contributor Covenant][homepage], versi
 > Any future real-world deployment within the campus will be subject to formal approval and authorization from the college administration.
 >
 > The project does not claim ownership of institutional processes, branding, or authority and is intended only to demonstrate an innovative solution to a campus problem.
-
-

@@ -1,4 +1,4 @@
-# Contributing to REC LostLink
+﻿# Contributing to REC LostLink
 
 Thank you for contributing to the REC LostLink ecosystem. Your help improves the experience for all students at Rajalakshmi Engineering College.
 
