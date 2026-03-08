@@ -1,5 +1,6 @@
 ﻿# REC LostLink 🔍
 
+
 Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
 ![Stars](https://img.shields.io/github/stars/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=github&color=FFD700) [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](https://opensource.org/licenses/MIT)
