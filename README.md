@@ -1,4 +1,5 @@
-# REC LostLink 🔍
+﻿# REC LostLink 🔍
+
 
 Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 
@@ -8,6 +9,7 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
 **REC LostLink** is a streamlined solution that drastically simplifies the lost and found reporting and claiming process within the REC campus. It offers a secure and centralized platform built to replace traditional manual tracking with modern efficiency.
 
 > **Disclaimer**: This student-developed project is a prototype created for educational purposes and is not yet an official product of the college.
+
 
 ## Gallery
 
@@ -27,12 +29,10 @@ Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College.
     </td>
   </tr>
   <tr>
-```markdown
     <td align="center" valign="top" width="33.33%">
       <b>Admin Panel</b><br><sub>Management</sub><br>
       <img src="docs/assets/admin.png" width="40%" align="middle" alt="Light" />
     </td>
-```
     <td align="center" valign="top" width="33.33%">
       <b>Splash Screen</b><br><sub>Branding</sub><br>
       <img src="docs/assets/S1.jpg" width="40%" align="middle" alt="Light" />
@@ -110,9 +110,11 @@ npm start
 - **Login Bug?** Delete `fastapi-backend/venv` and reinstall manually. Some bcrypt versions can clash.
 - **Database Missing?** Make sure MongoDB is active via `mongod` command on your system.
 
+
 ## 🤝 Community & License
 
 - [Review our Code of Conduct](./CODE_OF_CONDUCT.md)
 - [View detailed System Logic & Workflows](./LOGIC.md)
 - [How to Contribute](./CONTRIBUTING.md)
 - Licensed under the **MIT License**. Check out [LICENSE](./LICENSE) for details.
+
