@@ -156,7 +156,8 @@ async def get_my_requests(
                 "status": claim.get("status"),
                 "submissionDate": claim.get("submissionDate"),
                 "Claim_ID": claim.get("Claim_ID"),
-                "claimant_name": "Applicant" # Could fetch actual name if needed
+                "adminRemarks": claim.get("admin_remarks"),
+                "claimant_name": "Applicant"
             }
     
     # 2. Items claimed by the user (but not reported by them)
@@ -186,7 +187,8 @@ async def get_my_requests(
                     "proofImageUrl": claim.get("proofImageUrl"),
                     "status": claim.get("status"),
                     "submissionDate": claim.get("submissionDate"),
-                    "Claim_ID": claim.get("Claim_ID")
+                    "Claim_ID": claim.get("Claim_ID"),
+                    "adminRemarks": claim.get("admin_remarks")
                 }
             item["is_claim"] = True
             items.append(item)

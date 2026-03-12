@@ -119,6 +119,14 @@ const MyRequestsScreen = ({ navigation }) => {
                                         {item.is_report ? 'Process Status: ' : 'Claim Status: '}{item.user_claim.status}
                                     </Text>
                                 </View>
+                                {item.user_claim.adminRemarks && (
+                                    <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e2e8f0' }}>
+                                        <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 4 }}>Decision Note:</Text>
+                                        <Text style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', lineHeight: 18 }}>
+                                            "{item.user_claim.adminRemarks}"
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         )}
 
