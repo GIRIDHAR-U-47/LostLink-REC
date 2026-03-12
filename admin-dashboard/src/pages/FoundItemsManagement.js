@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 
 const FoundItemsManagement = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -176,7 +177,11 @@ const FoundItemsManagement = () => {
             });
             alert('Found item recorded and added to inventory!');
         } catch (error) {
-            alert('Error: ' + (error.response?.data?.detail || error.message));
+            const detail = error.response?.data?.detail;
+            const errorMessage = Array.isArray(detail)
+                ? detail.map(err => `${err.loc.join('.')}: ${err.msg}`).join('\n')
+                : (typeof detail === 'object' ? JSON.stringify(detail) : (detail || error.message));
+            alert('Submission Failed:\n' + errorMessage);
         } finally {
             setUpdating(false);
         }
@@ -529,7 +534,7 @@ const FoundItemsManagement = () => {
                                                         <div style={{ fontWeight: '700', color: '#0c4a6e' }}>{context.linked_item.Lost_ID || 'ID-LOST'}</div>
                                                         <div style={{ fontSize: '12px', color: '#0ea5e9' }}>Reported by: {context.linked_item.user?.name}</div>
                                                     </div>
-                                                    <button onClick={() => window.location.href = `/admin/lost-items?search=${context.linked_item.Lost_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #7dd3fc', background: '#fff', color: '#0284c7', fontSize: '12px', cursor: 'pointer' }}>View Case</button>
+                                                    <button onClick={() => navigate(`/lost-items?search=${context.linked_item.Lost_ID}`)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #7dd3fc', background: '#fff', color: '#0284c7', fontSize: '12px', cursor: 'pointer' }}>View Case</button>
                                                 </div>
                                             ) : (
                                                 <div style={{ textAlign: 'center' }}>
@@ -570,6 +575,29 @@ const FoundItemsManagement = () => {
                                                 </div>
                                             </div>
 
+                                            {context?.claims?.length > 0 && (
+                                                <div style={{ marginBottom: '20px', maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
+                                                    <h5 style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 10px 0', textTransform: 'uppercase' }}>Active Claims</h5>
+                                                    {context.claims.map(claim => (
+                                                        <div key={claim._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', backgroundColor: '#f0f4ff', borderRadius: '10px', marginBottom: '8px', border: '1px solid #e0e7ff' }}>
+                                                            <div>
+                                                                <div style={{ fontWeight: '700', fontSize: '13px', color: '#1e293b' }}>{claim.claimant?.name || 'Unknown'}</div>
+                                                                <div style={{ fontSize: '11px', color: claim.status === 'PENDING' ? '#f59e0b' : '#10b981', fontWeight: '600' }}>{claim.status}</div>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/claims?id=${selectedItem.id || selectedItem._id}&claimId=${claim._id || claim.id}`);
+                                                                }}
+                                                                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6c5ce7', background: '#fff', color: '#6c5ce7', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                                                            >
+                                                                Review
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div style={{ marginBottom: '20px' }}>
                                                 <button
                                                     onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}
@@ -580,7 +608,7 @@ const FoundItemsManagement = () => {
                                                 </button>
 
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                                    <button onClick={() => window.location.href = `/admin/claims?id=${selectedItem.id || selectedItem._id}`} style={{ padding: '12px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>View Claims</button>
+                                                    <button onClick={() => navigate(`/claims?id=${selectedItem.id || selectedItem._id}`)} style={{ padding: '12px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>View Claims</button>
 
                                                     {selectedItem.status === 'AVAILABLE' || selectedItem.status === 'CLAIMED' ? (
                                                         <button onClick={() => setShowHandoverModal(true)} style={{ padding: '12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Record Handover</button>
@@ -804,8 +832,22 @@ const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating
                             type="file"
                             accept="image/*"
                             onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
-                            style={{ fontSize: '12px' }}
+                            style={{ fontSize: '12px', width: '100%' }}
                         />
+                        {newItem.image && (
+                            <div style={{ marginTop: '10px', position: 'relative' }}>
+                                <img
+                                    src={URL.createObjectURL(newItem.image)}
+                                    alt="Preview"
+                                    style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: '8px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setNewItem({ ...newItem, image: null })}
+                                    style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer' }}
+                                >✕</button>
+                            </div>
+                        )}
                     </div>
                     <button
                         type="submit"

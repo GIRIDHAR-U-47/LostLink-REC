@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 
 const ClaimsManagement = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const itemId = queryParams.get('id');
 
@@ -65,6 +66,14 @@ const ClaimsManagement = () => {
             setLoading(false);
         }
     }, [filters.status, itemId]);
+
+    useEffect(() => {
+        const targetClaimId = queryParams.get('claimId');
+        if (targetClaimId && claims.length > 0) {
+            const claim = claims.find(c => (c.id === targetClaimId || c._id === targetClaimId));
+            if (claim) setSelectedClaim(claim);
+        }
+    }, [claims, location.search]);
 
     useEffect(() => {
         fetchClaims();
@@ -129,7 +138,7 @@ const ClaimsManagement = () => {
                         📍 Showing claims for Item ID: <span style={{ fontFamily: 'monospace', background: '#fff', padding: '2px 6px', borderRadius: '4px' }}>{itemId}</span>
                     </div>
                     <button
-                        onClick={() => window.location.href = '/admin/claims'}
+                        onClick={() => navigate('/claims')}
                         style={{ background: '#fff', border: '1px solid #0284c7', color: '#0284c7', padding: '5px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                     >
                         Clear Filter
@@ -250,7 +259,7 @@ const ClaimsManagement = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h4>Item Details</h4>
                                 <button
-                                    onClick={() => window.location.href = `/admin/found-items?search=${selectedClaim.item?.Found_ID}`}
+                                    onClick={() => navigate(`/found-items?search=${selectedClaim.item?.Found_ID}`)}
                                     style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6c5ce7', background: '#fff', color: '#6c5ce7', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
                                 >
                                     View Asset Case

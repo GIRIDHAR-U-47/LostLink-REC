@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Form, UploadFile, File
 from typing import List, Optional
 from datetime import datetime, timedelta
+import os
+import shutil
 from bson import ObjectId
 from pydantic import BaseModel
 from app.core.database import get_database
@@ -210,10 +212,12 @@ async def admin_add_found_item(
     if image:
         image_dir = os.path.join(os.getcwd(), "static", "images")
         os.makedirs(image_dir, exist_ok=True)
-        file_location = os.path.join(image_dir, image.filename)
+        # Create unique filename
+        filename = f"{int(datetime.utcnow().timestamp())}_{image.filename}"
+        file_location = os.path.join(image_dir, filename)
         with open(file_location, "wb+") as file_object:
              shutil.copyfileobj(image.file, file_object)
-        image_url = f"static/images/{image.filename}"
+        image_url = f"static/images/{filename}"
     
     found_id = generate_custom_id("FND")
 

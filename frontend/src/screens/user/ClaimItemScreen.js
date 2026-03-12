@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import api from '../../services/api';
+import api, { FILE_BASE_URL } from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const ClaimItemScreen = ({ route, navigation }) => {
@@ -83,7 +83,7 @@ const ClaimItemScreen = ({ route, navigation }) => {
             <View style={styles.itemCard}>
                 {item.imageUrl && (
                     <Image
-                        source={{ uri: `${api.defaults.baseURL.replace('/api', '')}/${item.imageUrl}` }}
+                        source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
                         style={styles.itemImage}
                         resizeMode="cover"
                     />

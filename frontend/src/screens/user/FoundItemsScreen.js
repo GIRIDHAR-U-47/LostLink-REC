@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image, RefreshControl } from 'react-native';
-import api from '../../services/api';
+import api, { FILE_BASE_URL } from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const FoundItemsScreen = ({ navigation }) => {
@@ -43,7 +43,7 @@ const FoundItemsScreen = ({ navigation }) => {
 
             {item.imageUrl ? (
                 <Image
-                    source={{ uri: `http://10.234.72.182:8080/${item.imageUrl}` }}
+                    source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
                     style={styles.itemImage}
                     resizeMode="cover"
                 />

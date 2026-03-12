@@ -31,9 +31,7 @@ const adminService = {
     markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
 
     // New Enhanced Features
-    addFoundItem: (formData) => api.post('/admin/items/found', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    addFoundItem: (formData) => api.post('/admin/items/found', formData),
     getMatches: () => api.get('/admin/items/matches'),
     handoverItem: (itemId, handoverData) => api.post(`/admin/items/${itemId}/handover`, handoverData),
     archiveItem: (itemId) => api.post(`/admin/items/${itemId}/archive`),

@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 
 const LostItemsViewer = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -550,7 +551,7 @@ const LostItemsViewer = () => {
                                                         <div style={{ fontWeight: '700', color: '#064e3b' }}>{context.linked_item.Found_ID || 'ID-FOUND'}</div>
                                                         <div style={{ fontSize: '12px', color: '#10b981' }}>Category: {context.linked_item.category}</div>
                                                     </div>
-                                                    <button onClick={() => window.location.href = `/admin/found-items?search=${context.linked_item.Found_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6ee7b7', background: '#fff', color: '#059669', fontSize: '12px', cursor: 'pointer' }}>View Asset</button>
+                                                    <button onClick={() => navigate(`/found-items?search=${context.linked_item.Found_ID}`)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6ee7b7', background: '#fff', color: '#059669', fontSize: '12px', cursor: 'pointer' }}>View Asset</button>
                                                 </div>
                                             ) : (
                                                 <div style={{ textAlign: 'center' }}>

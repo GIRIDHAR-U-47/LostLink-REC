@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import api from '../../services/api';
+import api, { FILE_BASE_URL } from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const MyRequestsScreen = ({ navigation }) => {
@@ -83,7 +83,7 @@ const MyRequestsScreen = ({ navigation }) => {
 
                 {item.imageUrl ? (
                     <Image
-                        source={{ uri: `http://10.234.72.182:8080/${item.imageUrl}` }}
+                        source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
                         style={styles.itemImage}
                         resizeMode="cover"
                     />
@@ -109,7 +109,7 @@ const MyRequestsScreen = ({ navigation }) => {
                                 </Text>
                                 {item.user_claim.proofImageUrl && (
                                     <Image
-                                        source={{ uri: `http://10.234.72.182:8080/${item.user_claim.proofImageUrl}` }}
+                                        source={{ uri: `${FILE_BASE_URL}${item.user_claim.proofImageUrl}` }}
                                         style={styles.proofImage}
                                         resizeMode="cover"
                                     />
