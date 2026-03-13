@@ -1,5 +1,3 @@
-# <img src="docs/assets/banner.png" width="100%" alt="REC LostLink Banner">
-
 <div align="center">
 
 # 🔍 REC LostLink
