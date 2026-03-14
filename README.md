@@ -134,10 +134,13 @@ cd admin-dashboard
 npm start
 ```
 
-**Terminal 3: Mobile App**
+**Terminal 3: Mobile App** 
+LostLink-REC\frontend\src\services\api.js - check the API_BASE_URL and update the IP address to your system's IP address
 ```bash
 cd frontend
 npx expo start
+or 
+npx expo start --host lan -c
 ```
 
 ---
