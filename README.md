@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔍 REC LostLink
+# REC LostLink
 ### *Digitalizing the Lost & Found Ecosystem at Rajalakshmi Engineering College*
 
 [![GitHub Stars](https://img.shields.io/github/stars/GIRIDHAR-U-47/LostLink-REC?style=for-the-badge&logo=github&color=FFD700)](https://github.com/GIRIDHAR-U-47/LostLink-REC/stargazers)
