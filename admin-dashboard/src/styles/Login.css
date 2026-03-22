@@ -1,0 +1,160 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #2E1065 50%, #4A148C 20%, #671B95 70%);
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.login-card {
+    background: white;
+    padding: 50px;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 440px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.login-header h1 {
+    color: #671B95;
+    margin: 10px 0 5px 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.login-header p {
+    color: #64748b;
+    font-size: 15px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #475569;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #f8fafc;
+    transition: all 0.2s;
+}
+
+input:focus {
+    background-color: white;
+    border-color: #671B95;
+    box-shadow: 0 0 0 4px rgba(103, 27, 149, 0.1);
+}
+
+.error-message {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #fecaca;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-wrapper,
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-wrapper input,
+.password-input-wrapper input {
+    width: 100%;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: color 0.2s;
+    box-shadow: none;
+}
+
+.password-toggle:hover {
+    color: #671B95;
+    transform: none;
+    box-shadow: none;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #671B95, #7C3AED);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 15px -3px rgba(103, 27, 149, 0.3);
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(103, 27, 149, 0.4);
+    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+}
+
+button:disabled {
+    background: #cbd5e1;
+    transform: none;
+    box-shadow: none;
+}
+
+.demo-credentials {
+    background-color: #f3f4f6;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 30px;
+    font-size: 13px;
+    color: #475569;
+    border: 1px dashed #cbd5e1;
+    text-align: center;
+}
+
+.demo-credentials strong {
+    color: #334155;
+    display: block;
+    margin-bottom: 5px;
+}

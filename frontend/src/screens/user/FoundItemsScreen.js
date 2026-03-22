@@ -1,0 +1,178 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import api, { FILE_BASE_URL } from '../../services/api';
+import { COLORS } from '../../constants/theme';
+
+const FoundItemsScreen = ({ navigation }) => {
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchItems = async () => {
+        try {
+            const response = await api.get('/items/feed');
+            setItems(response.data);
+        } catch (error) {
+            console.log('Error fetching feed', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchItems();
+    };
+
+    useEffect(() => {
+        fetchItems();
+    }, []);
+
+    const renderItem = ({ item }) => (
+        <View style={styles.card}>
+            <View style={styles.cardHeader}>
+                <View>
+                    <Text style={[styles.type, { color: item.type === 'LOST' ? COLORS.error : COLORS.success }]}>
+                        {item.type}
+                    </Text>
+                    <Text style={styles.category}>{item.category}</Text>
+                </View>
+                <Text style={styles.date}>{new Date(item.dateTime).toLocaleDateString()}</Text>
+            </View>
+
+            {item.imageUrl ? (
+                <Image
+                    source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                />
+            ) : null}
+
+            <Text style={styles.location}>📍 {item.location}</Text>
+            <Text style={styles.description}>{item.description}</Text>
+
+            {item.type === 'FOUND' ? (
+                <TouchableOpacity
+                    style={styles.claimButton}
+                    onPress={() => navigation.navigate('ClaimItem', { item })}
+                >
+                    <Text style={styles.claimButtonText}>This is mine!</Text>
+                </TouchableOpacity>
+            ) : (
+                <View style={[styles.statusBadge, { backgroundColor: COLORS.error + '20' }]}>
+                    <Text style={[styles.statusText, { color: COLORS.error }]}>Searching for Owner</Text>
+                </View>
+            )}
+        </View>
+    );
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.header}>Lost & Found Feed</Text>
+            {loading && !refreshing ? (
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            ) : (
+                <FlatList
+                    data={items}
+                    renderItem={renderItem}
+                    keyExtractor={item => (item.id || item._id).toString()}
+                    contentContainerStyle={styles.list}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No items reported in the feed yet.</Text>}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
+                />
+            )}
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.white,
+        padding: 10,
+    },
+    header: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        paddingTop: 50,
+        marginBottom: 20,
+        paddingHorizontal: 10,
+    },
+    list: {
+        paddingTop: 10, // Added space above first card
+        paddingBottom: 20,
+    },
+    card: {
+        backgroundColor: COLORS.background,
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 5,
+    },
+    category: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+    },
+    type: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    date: {
+        color: COLORS.textLight,
+        fontSize: 12,
+    },
+    location: {
+        color: COLORS.text,
+        marginBottom: 5,
+        fontWeight: '500',
+    },
+    description: {
+        color: COLORS.textLight,
+        marginBottom: 10,
+    },
+    claimButton: {
+        backgroundColor: COLORS.primary,
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    claimButtonText: {
+        color: COLORS.white,
+        fontWeight: 'bold',
+    },
+    statusBadge: {
+        padding: 8,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    statusText: {
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+    itemImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 10,
+        marginBottom: 10,
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 50,
+        color: COLORS.textLight,
+    },
+});
+
+export default FoundItemsScreen;
