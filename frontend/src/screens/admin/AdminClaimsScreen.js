@@ -3,7 +3,7 @@ import {
     View, Text, FlatList, StyleSheet, ActivityIndicator,
     TouchableOpacity, Alert, Image, ScrollView, Modal, TextInput
 } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 
 const AdminClaimsScreen = ({ route, navigation }) => {

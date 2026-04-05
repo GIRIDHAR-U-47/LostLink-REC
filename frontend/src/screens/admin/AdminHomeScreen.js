@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, SafeAreaView } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { COLORS } from '../../constants/theme';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 
 const AdminHomeScreen = ({ navigation }) => {
     const { logout, userInfo } = useContext(AuthContext);

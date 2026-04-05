@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 

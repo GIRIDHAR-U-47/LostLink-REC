@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 
 const AdminProfileScreen = ({ navigation }) => {

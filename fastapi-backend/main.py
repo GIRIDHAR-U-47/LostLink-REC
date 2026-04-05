@@ -24,6 +24,11 @@ origins = [
     "http://127.0.0.1:3000",  # Admin Dashboard (alternative)
     "http://localhost:19006", # Expo web
     "http://localhost:8081",  # React Native Metro bundler
+    "http://localhost:8082",  # Expo on alternate port
+    "http://192.168.0.107:8081",  # Expo on local network
+    "http://192.168.0.107:8082",  # Expo on alternate port (local network)
+    "http://192.168.0.107:19006",  # Expo web on local network
+    "*",  # Allow all origins for development (IMPORTANT: Restrict this in production!)
 ]
 
 app.add_middleware(

@@ -14,13 +14,13 @@ const NotificationsScreen = ({ navigation }) => {
 
     const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications/me');
+            const res = await api.get('/api/notifications/me');
             setNotifications(res.data);
 
             // Mark all as read when opening the screen
             const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
             if (unreadIds.length > 0) {
-                await Promise.all(unreadIds.map(id => api.put(`/notifications/${id}/read`)));
+                await Promise.all(unreadIds.map(id => api.put(`/api/notifications/${id}/read`)));
             }
         } catch (error) {
             console.log('Error fetching notifications:', error);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import adminService from '../services/adminService';
+import { formatDateTime, getTrackingId } from '../utils/helpers';
 
 const HandoverRecords = () => {
     const [records, setRecords] = useState([]);
@@ -96,7 +97,7 @@ const HandoverRecords = () => {
                                 filteredRecords.map((record, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fcfcfd'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                                         <td style={{ padding: '22px 20px', fontSize: '13px', color: '#64748b' }}>
-                                            {record.handed_over_at ? new Date(record.handed_over_at).toLocaleString() : 'N/A'}
+                                            {formatDateTime(record.handed_over_at)}
                                         </td>
                                         <td style={{ padding: '22px 20px' }}>
                                             <div style={{
@@ -109,11 +110,12 @@ const HandoverRecords = () => {
                                                 fontSize: '13px',
                                                 fontFamily: 'monospace'
                                             }}>
-                                                {record.handed_over_to_student_id}
+                                                {record.handed_over_to_student_id || 'N/A'}
                                             </div>
                                         </td>
                                         <td style={{ padding: '22px 20px' }}>
                                             <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{record.category}</div>
+                                            <div style={{ fontSize: '11px', color: '#6c5ce7', fontWeight: 'bold', fontFamily: 'monospace' }}>{getTrackingId(record)}</div>
                                             <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {record.description}
                                             </div>

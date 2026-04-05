@@ -9,7 +9,7 @@ const MyRequestsScreen = ({ navigation }) => {
 
     const fetchMyRequests = async () => {
         try {
-            const response = await api.get('/items/my-requests');
+            const response = await api.get('/api/items/my-requests');
             setItems(response.data);
         } catch (error) {
             console.log('Error fetching activity feed', error);

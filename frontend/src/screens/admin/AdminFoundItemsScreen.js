@@ -4,7 +4,7 @@ import {
     TouchableOpacity, Alert, RefreshControl, TextInput,
     Modal, ScrollView, Image
 } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 
 const AdminFoundItemsScreen = ({ navigation }) => {

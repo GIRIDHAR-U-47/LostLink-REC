@@ -6,9 +6,9 @@ import api from './api';
 
 export const adminAPI = {
   // Dashboard stats
-  getDashboardStats: () => api.get('/admin/stats/dashboard'),
-  getCategoryStats: () => api.get('/admin/stats/category-breakdown'),
-  getRecoveryRate: () => api.get('/admin/stats/recovery-rate'),
+  getDashboardStats: () => api.get('/api/admin/stats/dashboard'),
+  getCategoryStats: () => api.get('/api/admin/stats/category-breakdown'),
+  getRecoveryRate: () => api.get('/api/admin/stats/recovery-rate'),
 
   // Search & Filters
   searchItems: (query, filters) => {
@@ -20,16 +20,16 @@ export const adminAPI = {
     if (filters.dateFrom) params.append('date_from', filters.dateFrom);
     if (filters.dateTo) params.append('date_to', filters.dateTo);
 
-    return api.get(`/admin/items/search?${params.toString()}`);
+    return api.get(`/api/admin/items/search?${params.toString()}`);
   },
 
   // Notifications
   getNotifications: (unreadOnly = false) =>
-    api.get(`/admin/notifications?unread_only=${unreadOnly}`),
+    api.get(`/api/admin/notifications?unread_only=${unreadOnly}`),
   markNotificationRead: (notificationId) =>
-    api.put(`/admin/notifications/${notificationId}/read`),
+    api.put(`/api/admin/notifications/${notificationId}/read`),
   createNotification: (adminId, title, message, type, relatedId) =>
-    api.post('/admin/notification-trigger', {
+    api.post('/api/admin/notification-trigger', {
       admin_id: adminId,
       title,
       message,
@@ -39,37 +39,37 @@ export const adminAPI = {
 
   // Storage Management
   assignStorage: (itemId, location, remarks) =>
-    api.put(`/admin/items/${itemId}/assign-storage`, {
+    api.put(`/api/admin/items/${itemId}/assign-storage`, {
       storage_location: location,
       admin_remarks: remarks
     }),
 
   // Audit Logs
   getAuditLogs: (limit = 100) =>
-    api.get(`/admin/audit-logs?limit=${limit}`),
+    api.get(`/api/admin/audit-logs?limit=${limit}`),
 
   // Profile
-  getAdminProfile: () => api.get('/admin/profile'),
-  getLoginHistory: () => api.get('/admin/login-history'),
+  getAdminProfile: () => api.get('/api/admin/profile'),
+  getLoginHistory: () => api.get('/api/admin/login-history'),
 
   // Claims Management
-  getClaimsByStatus: (status) => api.get('/claims/status', { params: status ? { status } : {} }),
-  getClaimsForItem: (itemId) => api.get(`/claims/item/${itemId}`),
+  getClaimsByStatus: (status) => api.get('/api/claims/status', { params: status ? { status } : {} }),
+  getClaimsForItem: (itemId) => api.get(`/api/claims/item/${itemId}`),
   verifyClaim: (claimId, status, remarks) =>
-    api.put(`/claims/${claimId}/verify?status=${status}`, { remarks }),
+    api.put(`/api/claims/${claimId}/verify?status=${status}`, { remarks }),
 
   // Enhanced Features
-  addFoundItem: (formData) => api.post('/admin/items/found', formData, {
+  addFoundItem: (formData) => api.post('/api/admin/items/found', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  getMatches: () => api.get('/admin/items/matches'),
-  handoverItem: (itemId, handoverData) => api.post(`/admin/items/${itemId}/handover`, handoverData),
-  archiveItem: (itemId) => api.post(`/admin/items/${itemId}/archive`),
-  disposeItem: (itemId) => api.post(`/admin/items/${itemId}/dispose`),
-  sendBroadcast: (broadcastData) => api.post('/admin/broadcast', broadcastData),
-  getItemContext: (itemId) => api.get(`/admin/items/${itemId}/context`),
-  linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
-  notifyOwner: (itemId, remarks) => api.post(`/admin/items/${itemId}/notify-owner`, { remarks })
+  getMatches: () => api.get('/api/admin/items/matches'),
+  handoverItem: (itemId, handoverData) => api.post(`/api/admin/items/${itemId}/handover`, handoverData),
+  archiveItem: (itemId) => api.post(`/api/admin/items/${itemId}/archive`),
+  disposeItem: (itemId) => api.post(`/api/admin/items/${itemId}/dispose`),
+  sendBroadcast: (broadcastData) => api.post('/api/admin/broadcast', broadcastData),
+  getItemContext: (itemId) => api.get(`/api/admin/items/${itemId}/context`),
+  linkItems: (itemId, linkedItemId) => api.put(`/api/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
+  notifyOwner: (itemId, remarks) => api.post(`/api/admin/items/${itemId}/notify-owner`, { remarks })
 };
 
 export default adminAPI;

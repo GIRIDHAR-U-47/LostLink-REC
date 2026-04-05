@@ -2,18 +2,36 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
+import { formatDateTime, getRelativeTime, getTrackingId, getItemId, getStatusBadge } from '../utils/helpers';
 
 const LostItemsViewer = () => {
     const location = useLocation();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [categories, setCategories] = useState([]);
     const [filters, setFilters] = useState({
         category: '',
         status: '',
         dateFrom: '',
         dateTo: ''
     });
+
+    /* Fetch categories dynamically from backend */
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const res = await adminService.getCategories();
+                if (res.data && typeof res.data === 'object') {
+                    setCategories(Object.keys(res.data));
+                }
+            } catch (err) {
+                console.error('Failed to fetch categories:', err);
+                setCategories(['DOCUMENTS', 'DEVICES', 'ACCESSORIES', 'PERSONAL_ITEMS', 'KEYS', 'BOOKS', 'JEWELLERY', 'OTHERS']);
+            }
+        };
+        loadCategories();
+    }, []);
 
     // Check for search param on mount
     useEffect(() => {
@@ -55,7 +73,7 @@ const LostItemsViewer = () => {
         if (!selectedItem || !foundItemId) return;
         setUpdating(true);
         try {
-            const currentId = selectedItem.id || selectedItem._id;
+            const currentId = getItemId(selectedItem);
             await adminService.linkItems(currentId, foundItemId);
             setShowLinkModal(false);
             alert('Items linked successfully!');
@@ -117,7 +135,7 @@ const LostItemsViewer = () => {
         if (!selectedItem) return;
         setUpdating(true);
         try {
-            const itemId = selectedItem.id || selectedItem._id;
+            const itemId = getItemId(selectedItem);
             await adminService.notifyOwner(itemId, remarks);
             alert('Owner notified successfully with your remarks!');
             fetchItems();
@@ -135,7 +153,7 @@ const LostItemsViewer = () => {
 
         setUpdating(true);
         try {
-            const itemId = selectedItem.id || selectedItem._id;
+            const itemId = getItemId(selectedItem);
             const nextStatus = selectedItem.status === 'AVAILABLE' ? 'RETURNED' : 'AVAILABLE';
             await adminService.assignStorage(itemId, storageLocation, remarks, nextStatus);
 
@@ -152,11 +170,11 @@ const LostItemsViewer = () => {
 
     const handleHandover = async (e) => {
         e.preventDefault();
-        const itemId = selectedItem.id || selectedItem._id;
+        const itemId = getItemId(selectedItem);
         setUpdating(true);
         try {
             await adminService.handoverItem(itemId, handoverData);
-            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'RETURNED' } : item));
+            setItems(items.map(item => (getItemId(item) === itemId) ? { ...item, status: 'RETURNED' } : item));
             setShowHandoverModal(false);
             setSelectedItem(null);
             alert('Physical handover recorded successfully!');
@@ -167,14 +185,7 @@ const LostItemsViewer = () => {
         }
     };
 
-    const getRecencyLabel = (dateTime) => {
-        const days = Math.floor((new Date() - new Date(dateTime)) / (1000 * 60 * 60 * 24));
-        if (days === 0) return 'Today';
-        if (days === 1) return 'Yesterday';
-        if (days < 7) return `${days} days ago`;
-        if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-        return `${Math.floor(days / 30)} months ago`;
-    };
+    // Removed: using dayjs-based getRelativeTime from helpers
 
     return (
         <div style={{ padding: '20px', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
@@ -228,13 +239,9 @@ const LostItemsViewer = () => {
                     onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
                     <option value="">All Categories</option>
-                    <option value="DEVICES">Devices</option>
-                    <option value="DOCUMENTS">Documents</option>
-                    <option value="ACCESSORIES">Accessories</option>
-                    <option value="KEYS">Keys</option>
-                    <option value="JEWELLERY">Jewellery</option>
-                    <option value="BOOKS">Books</option>
-                    <option value="OTHERS">Others</option>
+                    {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat.replace(/_/g, ' ')}</option>
+                    ))}
                 </select>
 
                 <select
@@ -297,7 +304,7 @@ const LostItemsViewer = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
                     {items.map(item => (
                         <div
-                            key={item.id || item._id}
+                            key={getItemId(item)}
                             style={{
                                 backgroundColor: 'white',
                                 borderRadius: '16px',
@@ -309,7 +316,7 @@ const LostItemsViewer = () => {
                                 position: 'relative'
                             }}
                             onClick={() => {
-                                const id = item.id || item._id;
+                                const id = getItemId(item);
                                 setSelectedItem(item);
                                 setStorageLocation(item.storage_location || '');
                                 setRemarks(item.admin_remarks || '');
@@ -373,21 +380,21 @@ const LostItemsViewer = () => {
                                         fontSize: '11px',
                                         fontWeight: '800',
                                         textTransform: 'uppercase',
-                                        backgroundColor: item.status === 'AVAILABLE' ? '#d1fae5' :
-                                            item.status === 'PENDING' ? '#fef3c7' : '#fee2e2',
-                                        color: item.status === 'AVAILABLE' ? '#059669' :
-                                            item.status === 'PENDING' ? '#d97706' : '#dc2626'
+                                        backgroundColor: getStatusBadge(item.status).bg,
+                                        color: getStatusBadge(item.status).color
                                     }}>
-                                        {item.status || 'REPORTED'}
+                                        {getStatusBadge(item.status).label}
                                     </span>
                                     <span style={{ fontSize: '12px', color: '#b2bec3', fontWeight: '500' }}>
-                                        {getRecencyLabel(item.dateTime)}
+                                        {getRelativeTime(item.dateTime)}
                                     </span>
                                 </div>
 
                                 <h3 style={{ margin: '0 0 10px 0', color: '#2d3436', fontSize: '1.2rem' }}>{item.category}</h3>
-                                <div style={{ fontSize: '11px', color: '#b2bec3', fontWeight: 'bold', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                                    REPORT ID: {item.Lost_ID || (item.id || item._id).substring(0, 8).toUpperCase()}
+                                <div style={{ fontSize: '11px', color: '#6c5ce7', fontWeight: 'bold', marginBottom: '8px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ backgroundColor: '#ede9fe', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}>
+                                        {getTrackingId(item)}
+                                    </span>
                                 </div>
                                 <p style={{
                                     color: '#636e72',
@@ -512,12 +519,12 @@ const LostItemsViewer = () => {
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                                             <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
-                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Report ID</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#1e293b' }}>{selectedItem.Lost_ID || 'N/A'}</div>
+                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Tracking ID</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7', fontFamily: 'monospace' }}>{getTrackingId(selectedItem)}</div>
                                             </div>
                                             <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
                                                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Report Status</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7' }}>{selectedItem.status}</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: getStatusBadge(selectedItem.status).color }}>{getStatusBadge(selectedItem.status).label}</div>
                                             </div>
                                         </div>
 
@@ -550,7 +557,7 @@ const LostItemsViewer = () => {
                                                         <div style={{ fontWeight: '700', color: '#064e3b' }}>{context.linked_item.Found_ID || 'ID-FOUND'}</div>
                                                         <div style={{ fontSize: '12px', color: '#10b981' }}>Category: {context.linked_item.category}</div>
                                                     </div>
-                                                    <button onClick={() => window.location.href = `/admin/found-items?search=${context.linked_item.Found_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6ee7b7', background: '#fff', color: '#059669', fontSize: '12px', cursor: 'pointer' }}>View Asset</button>
+                                                    <button onClick={() => window.location.href = `/found-items?search=${context.linked_item.Found_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #6ee7b7', background: '#fff', color: '#059669', fontSize: '12px', cursor: 'pointer' }}>View Asset</button>
                                                 </div>
                                             ) : (
                                                 <div style={{ textAlign: 'center' }}>
@@ -653,14 +660,14 @@ const LostItemsViewer = () => {
                                 <p style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>No available found items matching this category.</p>
                             ) : (
                                 potentialLinks.map(link => (
-                                    <div key={link.id || link._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div key={getItemId(link)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
                                         <div>
-                                            <div style={{ fontWeight: '700', fontSize: '14px' }}>{link.Found_ID}</div>
+                                            <div style={{ fontWeight: '700', fontSize: '14px' }}>{link.Found_ID || getTrackingId(link)}</div>
                                             <div style={{ fontSize: '12px', color: '#64748b' }}>Location: {link.location}</div>
-                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(link.dateTime).toLocaleDateString()}</div>
+                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{formatDateTime(link.dateTime)}</div>
                                         </div>
                                         <button
-                                            onClick={() => handleLinkItem(link.id || link._id)}
+                                            onClick={() => handleLinkItem(getItemId(link))}
                                             style={{ padding: '8px 16px', background: '#00b894', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
                                         >
                                             Link
