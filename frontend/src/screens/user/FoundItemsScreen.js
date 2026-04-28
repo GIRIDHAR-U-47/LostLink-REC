@@ -10,7 +10,7 @@ const FoundItemsScreen = ({ navigation }) => {
 
     const fetchItems = async () => {
         try {
-            const response = await api.get('/items/feed');
+            const response = await api.get('/api/items/feed');
             setItems(response.data);
         } catch (error) {
             console.log('Error fetching feed', error);

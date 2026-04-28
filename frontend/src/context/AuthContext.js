@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password, isAdminLogin = false) => {
         setIsLoading(true);
         try {
-            const response = await api.post('/auth/login', { email, password });
+            const response = await api.post('/api/auth/login', { email, password });
             const { token, id, email: userEmail, roles, name, registerNumber } = response.data;
 
             if (isAdminLogin && (!roles || !roles.includes('ADMIN'))) {
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password, registerNumber, role) => {
         setIsLoading(true);
         try {
-            await api.post('/auth/register', { name, email, password, registerNumber, role });
+            await api.post('/api/auth/register', { name, email, password, registerNumber, role });
         } catch (error) {
             console.log('Register error', error);
             throw error;
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
         try {
             setSplashLoading(true);
 
-            // Artificial delay for splash screen (e.g. 5 seconds as requested)
+            // Artificial delay for splash screen (e.g. 2 seconds for faster perception)
             const minimumLoadTime = new Promise(resolve => setTimeout(resolve, 2000));
             const authCheck = (async () => {
                 let userToken = await AsyncStorage.getItem('userToken');

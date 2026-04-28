@@ -22,7 +22,7 @@ const UserHomeScreen = ({ navigation }) => {
 
     const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications/me');
+            const res = await api.get('/api/notifications/me');
             const unread = res.data.filter(n => !n.read).length;
             setUnreadNotifications(unread);
         } catch (error) {
@@ -33,8 +33,8 @@ const UserHomeScreen = ({ navigation }) => {
     const fetchStats = async () => {
         try {
             const [foundRes, myReqRes] = await Promise.all([
-                api.get('/items/found'),
-                api.get('/items/my-requests')
+                api.get('/api/items/found'),
+                api.get('/api/items/my-requests')
             ]);
 
             const myRequests = myReqRes.data;

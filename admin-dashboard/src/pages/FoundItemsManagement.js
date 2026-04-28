@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
-import { API_BASE_URL } from '../services/api';
+import {
+    formatDateTime, getRelativeTime, getTrackingId, getItemId,
+    getStatusBadge, CAMPUS_LOCATIONS
+} from '../utils/helpers';
 
 const FoundItemsManagement = () => {
     const location = useLocation();
@@ -9,6 +12,7 @@ const FoundItemsManagement = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [categories, setCategories] = useState([]);
     const [filters, setFilters] = useState({
         category: '',
         status: '',
@@ -24,10 +28,13 @@ const FoundItemsManagement = () => {
             setSearchQuery(searchVal);
         }
     }, [location]);
+
     const [selectedItem, setSelectedItem] = useState(null);
     const [storageLocation, setStorageLocation] = useState('');
     const [remarks, setRemarks] = useState('');
     const [updating, setUpdating] = useState(false);
+    const [showDisposalModal, setShowDisposalModal] = useState(false);
+    const [disposalReason, setDisposalReason] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [newItem, setNewItem] = useState({
         category: '',
@@ -48,6 +55,23 @@ const FoundItemsManagement = () => {
         remarks: ''
     });
 
+    /* Fetch categories dynamically from backend */
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const res = await adminService.getCategories();
+                // Backend returns { "DOCUMENTS": 5, "DEVICES": 3, ... }
+                if (res.data && typeof res.data === 'object') {
+                    setCategories(Object.keys(res.data));
+                }
+            } catch (err) {
+                console.error('Failed to fetch categories, using defaults:', err);
+                setCategories(['DOCUMENTS', 'DEVICES', 'ACCESSORIES', 'PERSONAL_ITEMS', 'KEYS', 'BOOKS', 'JEWELLERY', 'OTHERS']);
+            }
+        };
+        loadCategories();
+    }, []);
+
     const fetchContext = async (itemId) => {
         if (!itemId) return;
         setFetchingContext(true);
@@ -65,7 +89,7 @@ const FoundItemsManagement = () => {
         if (!selectedItem || !lostItemId) return;
         setUpdating(true);
         try {
-            const currentId = selectedItem.id || selectedItem._id;
+            const currentId = getItemId(selectedItem);
             await adminService.linkItems(currentId, lostItemId);
             setShowLinkModal(false);
             alert('Items linked successfully!');
@@ -82,7 +106,6 @@ const FoundItemsManagement = () => {
         setShowLinkModal(true);
         setUpdating(true);
         try {
-            // Search for open LOST reports in same category
             const response = await adminService.searchItems({
                 item_type: 'LOST',
                 status: 'OPEN',
@@ -127,9 +150,8 @@ const FoundItemsManagement = () => {
         try {
             await adminService.assignStorage(itemId, storageLocation, remarks);
 
-            // Optimistic UI Update
             setItems(currentItems => currentItems.map(item =>
-                (item.id === itemId || item._id === itemId)
+                (getItemId(item) === itemId)
                     ? { ...item, storage_location: storageLocation, admin_remarks: remarks, status: 'AVAILABLE' }
                     : item
             ));
@@ -191,31 +213,38 @@ const FoundItemsManagement = () => {
         if (!window.confirm('Transfer this item to the long-term archive?')) return;
         try {
             await adminService.archiveItem(itemId);
-            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'ARCHIVED' } : item));
+            setItems(items.map(item => (getItemId(item) === itemId) ? { ...item, status: 'ARCHIVED' } : item));
             setSelectedItem(null);
         } catch (error) {
             alert('Error: ' + (error.response?.data?.detail || error.message));
         }
     };
 
-    const handleDisposeItem = async (itemId) => {
-        if (!window.confirm('Permanently mark this item as disposed?')) return;
+    const handleDisposeItem = async () => {
+        if (!disposalReason.trim()) { alert('Please provide a reason for disposal'); return; }
+        const itemId = getItemId(selectedItem);
+        setUpdating(true);
         try {
-            await adminService.disposeItem(itemId);
-            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'DISPOSED' } : item));
+            await adminService.disposeItem(itemId, { reason: disposalReason });
+            setItems(items.map(item => (getItemId(item) === itemId) ? { ...item, status: 'DISPOSED' } : item));
+            setShowDisposalModal(false);
             setSelectedItem(null);
+            setDisposalReason('');
+            alert('Item officially disposed and recorded.');
         } catch (error) {
             alert('Error: ' + (error.response?.data?.detail || error.message));
+        } finally {
+            setUpdating(false);
         }
     };
 
     const handleHandover = async (e) => {
         e.preventDefault();
-        const itemId = selectedItem.id || selectedItem._id;
+        const itemId = getItemId(selectedItem);
         setUpdating(true);
         try {
             await adminService.handoverItem(itemId, handoverData);
-            setItems(items.map(item => (item.id === itemId || item._id === itemId) ? { ...item, status: 'RETURNED' } : item));
+            setItems(items.map(item => (getItemId(item) === itemId) ? { ...item, status: 'RETURNED' } : item));
             setShowHandoverModal(false);
             setSelectedItem(null);
             alert('Physical handover recorded successfully!');
@@ -224,14 +253,6 @@ const FoundItemsManagement = () => {
         } finally {
             setUpdating(false);
         }
-    };
-
-    const getRecencyLabel = (dateTime) => {
-        const days = Math.floor((new Date() - new Date(dateTime)) / (1000 * 60 * 60 * 24));
-        if (days === 0) return 'Today';
-        if (days === 1) return 'Yesterday';
-        if (days < 7) return `${days} days ago`;
-        return new Date(dateTime).toLocaleDateString();
     };
 
     return (
@@ -263,7 +284,7 @@ const FoundItemsManagement = () => {
                 </div>
             </div>
 
-            {/* Premium Search & Filters */}
+            {/* Search & Filters */}
             <div style={{
                 backgroundColor: 'white',
                 padding: '24px',
@@ -291,6 +312,7 @@ const FoundItemsManagement = () => {
                     />
                 </div>
 
+                {/* Dynamic category dropdown */}
                 <select
                     style={{
                         padding: '12px 16px',
@@ -304,14 +326,12 @@ const FoundItemsManagement = () => {
                     onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
                     <option value="">All Categories</option>
-                    <option value="DEVICES">Devices</option>
-                    <option value="DOCUMENTS">Documents</option>
-                    <option value="ACCESSORIES">Accessories</option>
-                    <option value="KEYS">Keys</option>
-                    <option value="JEWELLERY">Jewellery</option>
-                    <option value="BOOKS">Books</option>
+                    {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat.replace(/_/g, ' ')}</option>
+                    ))}
                 </select>
 
+                {/* Status filter — includes ARCHIVED and DISPOSED */}
                 <select
                     style={{
                         padding: '12px 16px',
@@ -328,6 +348,8 @@ const FoundItemsManagement = () => {
                     <option value="PENDING">Pending Verification</option>
                     <option value="AVAILABLE">Available / Verified</option>
                     <option value="RETURNED">Returned to Owner</option>
+                    <option value="ARCHIVED">Archived</option>
+                    <option value="DISPOSED">Disposed</option>
                 </select>
 
                 <button
@@ -350,111 +372,129 @@ const FoundItemsManagement = () => {
             {/* Items Grid */}
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '100px', color: '#636e72' }}>
+                    <div style={{ width: '40px', height: '40px', border: '3px solid #f3f3f3', borderTop: '3px solid #6c5ce7', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
                     <p style={{ fontSize: '18px' }}>Syncing discovery logs...</p>
+                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                 </div>
             ) : items.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '80px', backgroundColor: 'white', borderRadius: '16px', color: '#b2bec3' }}>
-                    <p style={{ fontSize: '20px' }}>No found items recorded in this sector.</p>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
+                    <p style={{ fontSize: '20px', fontWeight: '600' }}>No found items recorded.</p>
+                    <p style={{ fontSize: '14px', color: '#94a3b8', marginTop: '8px' }}>Try adjusting your filters or add a new item.</p>
                 </div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
-                    {items.map(item => (
-                        <div
-                            key={item.id || item._id}
-                            style={{
-                                backgroundColor: 'white',
-                                borderRadius: '16px',
-                                overflow: 'hidden',
-                                boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
-                                transition: 'all 0.3s',
-                                cursor: 'pointer',
-                                border: '1px solid #f1f2f6',
-                                position: 'relative'
-                            }}
-                            onClick={() => {
-                                const id = item.id || item._id;
-                                setSelectedItem(item);
-                                setStorageLocation(item.storage_location || '');
-                                setRemarks(item.admin_remarks || '');
-                                fetchContext(id);
-                            }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-8px)';
-                                e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.05)';
-                            }}
-                        >
-                            {(item.imageUrl || item.image_url) ? (
-                                <div style={{ height: '200px', position: 'relative' }}>
-                                    <img
-                                        src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
-                                        alt={item.category}
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
+                    {items.map(item => {
+                        const badge = getStatusBadge(item.status);
+                        const trackId = getTrackingId(item);
+                        return (
+                            <div
+                                key={getItemId(item)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    borderRadius: '16px',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.3s',
+                                    cursor: 'pointer',
+                                    border: '1px solid #f1f2f6',
+                                    position: 'relative'
+                                }}
+                                onClick={() => {
+                                    const id = getItemId(item);
+                                    setSelectedItem(item);
+                                    setStorageLocation(item.storage_location || '');
+                                    setRemarks(item.admin_remarks || '');
+                                    fetchContext(id);
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-8px)';
+                                    e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.1)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.05)';
+                                }}
+                            >
+                                {(item.imageUrl || item.image_url) ? (
+                                    <div style={{ height: '200px', position: 'relative' }}>
+                                        <img
+                                            src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
+                                            alt={item.category}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '12px',
+                                            right: '12px',
+                                            padding: '6px 14px',
+                                            backgroundColor: 'rgba(255,255,255,0.9)',
+                                            borderRadius: '30px',
+                                            fontSize: '11px',
+                                            fontWeight: '800',
+                                            color: '#2d3436',
+                                            backdropFilter: 'blur(4px)'
+                                        }}>
+                                            {item.category}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ height: '160px', backgroundColor: '#6c5ce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                        <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔎</div>
+                                        <div style={{ color: 'white', fontWeight: '600' }}>{item.category}</div>
+                                    </div>
+                                )}
+
+                                <div style={{ padding: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                        <span style={{
+                                            padding: '4px 12px',
+                                            borderRadius: '6px',
+                                            fontSize: '11px',
+                                            fontWeight: '800',
+                                            textTransform: 'uppercase',
+                                            backgroundColor: badge.bg,
+                                            color: badge.color
+                                        }}>
+                                            {badge.label}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
+                                            {getRelativeTime(item.dateTime)}
+                                        </span>
+                                    </div>
+
+                                    <h3 style={{ margin: '0 0 10px 0', color: '#334155', fontSize: '1.25rem' }}>{item.category}</h3>
+
+                                    {/* Tracking ID — consistent display */}
                                     <div style={{
-                                        position: 'absolute',
-                                        top: '12px',
-                                        right: '12px',
-                                        padding: '6px 14px',
-                                        backgroundColor: 'rgba(255,255,255,0.9)',
-                                        borderRadius: '30px',
-                                        fontSize: '11px',
-                                        fontWeight: '800',
-                                        color: '#2d3436',
-                                        backdropFilter: 'blur(4px)'
+                                        fontSize: '11px', color: '#6c5ce7', fontWeight: 'bold',
+                                        marginBottom: '8px', letterSpacing: '0.5px',
+                                        display: 'flex', alignItems: 'center', gap: '6px'
                                     }}>
-                                        {item.category}
+                                        <span style={{
+                                            backgroundColor: '#ede9fe', padding: '2px 8px', borderRadius: '4px',
+                                            fontFamily: 'monospace', fontSize: '12px'
+                                        }}>
+                                            {trackId}
+                                        </span>
                                     </div>
-                                </div>
-                            ) : (
-                                <div style={{ height: '160px', backgroundColor: '#6c5ce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔎</div>
-                                    <div style={{ color: 'white', fontWeight: '600' }}>{item.category}</div>
-                                </div>
-                            )}
 
-                            <div style={{ padding: '20px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                    <span style={{
-                                        padding: '4px 12px',
-                                        borderRadius: '6px',
-                                        fontSize: '11px',
-                                        fontWeight: '800',
-                                        textTransform: 'uppercase',
-                                        backgroundColor: item.status === 'AVAILABLE' ? '#d1fae5' :
-                                            item.status === 'PENDING' ? '#fef3c7' : '#fee2e2',
-                                        color: item.status === 'AVAILABLE' ? '#059669' :
-                                            item.status === 'PENDING' ? '#d97706' : '#dc2626'
-                                    }}>
-                                        {item.status || 'PENDING'}
-                                    </span>
-                                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
-                                        {getRecencyLabel(item.dateTime)}
-                                    </span>
-                                </div>
+                                    <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{item.description}</p>
 
-                                <h3 style={{ margin: '0 0 10px 0', color: '#334155', fontSize: '1.25rem' }}>{item.category}</h3>
-                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                                    TRACKING ID: {item.Found_ID || (item.id || item._id).substring(0, 8).toUpperCase()}
-                                </div>
-                                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px', height: '40px', overflow: 'hidden' }}>{item.description}</p>
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: '1px solid #f1f5f9' }}>
-                                    <div style={{ fontSize: '13px', color: '#475569' }}>
-                                        <strong>Found at:</strong> {item.location}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: '1px solid #f1f5f9' }}>
+                                        <div style={{ fontSize: '13px', color: '#475569' }}>
+                                            <strong>Found at:</strong> {item.location}
+                                        </div>
+                                        <div style={{ fontSize: '18px' }} title="Details / Manage">➡️</div>
                                     </div>
-                                    <div style={{ fontSize: '18px' }} title="Details / Manage">➡️</div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
-            {/* Premium Management Modal */}
+            {/* Management Modal */}
             {selectedItem && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -479,7 +519,11 @@ const FoundItemsManagement = () => {
 
                         <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
                             {fetchingContext ? (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Syncing Case Context...</div>
+                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>
+                                    <div style={{ width: '30px', height: '30px', border: '3px solid #f3f3f3', borderTop: '3px solid #6c5ce7', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
+                                    Syncing Case Context...
+                                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                                </div>
                             ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
                                     {/* Left: Media & Links */}
@@ -493,12 +537,17 @@ const FoundItemsManagement = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                                             <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
                                                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Tracking ID</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#1e293b' }}>{selectedItem.Found_ID || 'N/A'}</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7', fontFamily: 'monospace' }}>{getTrackingId(selectedItem)}</div>
                                             </div>
                                             <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
                                                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Current Status</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7' }}>{selectedItem.status}</div>
+                                                <div style={{ fontWeight: '700', fontSize: '16px', color: getStatusBadge(selectedItem.status).color }}>{getStatusBadge(selectedItem.status).label}</div>
                                             </div>
+                                        </div>
+
+                                        {/* Reported Date */}
+                                        <div style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', color: '#475569' }}>
+                                            <strong>Reported:</strong> {formatDateTime(selectedItem.dateTime)}
                                         </div>
 
                                         {/* Finder Details Section */}
@@ -531,10 +580,10 @@ const FoundItemsManagement = () => {
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '10px' }}>
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '800' }}>CONNECTED LOST REPORT</div>
-                                                        <div style={{ fontWeight: '700', color: '#0c4a6e' }}>{context.linked_item.Lost_ID || 'ID-LOST'}</div>
+                                                        <div style={{ fontWeight: '700', color: '#0c4a6e' }}>{context.linked_item.Lost_ID || getTrackingId(context.linked_item)}</div>
                                                         <div style={{ fontSize: '12px', color: '#0ea5e9' }}>Reported by: {context.linked_item.user?.name}</div>
                                                     </div>
-                                                    <button onClick={() => navigate(`/lost-items?search=${context.linked_item.Lost_ID}`)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #7dd3fc', background: '#fff', color: '#0284c7', fontSize: '12px', cursor: 'pointer' }}>View Case</button>
+                                                    <button onClick={() => window.location.href = `/lost-items?search=${context.linked_item.Lost_ID}`} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #7dd3fc', background: '#fff', color: '#0284c7', fontSize: '12px', cursor: 'pointer' }}>View Case</button>
                                                 </div>
                                             ) : (
                                                 <div style={{ textAlign: 'center' }}>
@@ -600,7 +649,7 @@ const FoundItemsManagement = () => {
 
                                             <div style={{ marginBottom: '20px' }}>
                                                 <button
-                                                    onClick={() => handleAssignStorage(selectedItem.id || selectedItem._id)}
+                                                    onClick={() => handleAssignStorage(getItemId(selectedItem))}
                                                     disabled={updating}
                                                     style={{ width: '100%', padding: '14px', background: '#6c5ce7', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', marginBottom: '10px' }}
                                                 >
@@ -608,7 +657,7 @@ const FoundItemsManagement = () => {
                                                 </button>
 
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                                    <button onClick={() => navigate(`/claims?id=${selectedItem.id || selectedItem._id}`)} style={{ padding: '12px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>View Claims</button>
+                                                    <button onClick={() => window.location.href = `/claims?id=${getItemId(selectedItem)}`} style={{ padding: '12px', background: '#fff', border: '1px solid #6c5ce7', color: '#6c5ce7', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>View Claims</button>
 
                                                     {selectedItem.status === 'AVAILABLE' || selectedItem.status === 'CLAIMED' ? (
                                                         <button onClick={() => setShowHandoverModal(true)} style={{ padding: '12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Record Handover</button>
@@ -618,11 +667,12 @@ const FoundItemsManagement = () => {
                                                 </div>
                                             </div>
 
+                                            {/* Archive & Dispose buttons */}
                                             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px', marginTop: '20px' }}>
                                                 <h5 style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 10px 0', textTransform: 'uppercase' }}>Management Precautions</h5>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <button onClick={() => handleArchiveItem(selectedItem.id || selectedItem._id)} style={{ flex: 1, padding: '10px', background: '#fef3c7', color: '#d97706', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>Archive Case</button>
-                                                    <button onClick={() => handleDisposeItem(selectedItem.id || selectedItem._id)} style={{ flex: 1, padding: '10px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>Dispose Item</button>
+                                                    <button onClick={() => handleArchiveItem(getItemId(selectedItem))} style={{ flex: 1, padding: '10px', background: '#fef3c7', color: '#d97706', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>📁 Archive Case</button>
+                                                    <button onClick={() => { setDisposalReason(''); setShowDisposalModal(true); }} style={{ flex: 1, padding: '10px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>🗑 Dispose Item</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -633,6 +683,7 @@ const FoundItemsManagement = () => {
                     </div>
                 </div>
             )}
+
             {/* Physical Handover Modal */}
             {showHandoverModal && (
                 <div style={{
@@ -722,14 +773,14 @@ const FoundItemsManagement = () => {
                                 <p style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>No matching lost reports found in this category.</p>
                             ) : (
                                 potentialLinks.map(link => (
-                                    <div key={link.id || link._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div key={getItemId(link)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
                                         <div>
-                                            <div style={{ fontWeight: '700', fontSize: '14px' }}>{link.Lost_ID}</div>
+                                            <div style={{ fontWeight: '700', fontSize: '14px' }}>{link.Lost_ID || getTrackingId(link)}</div>
                                             <div style={{ fontSize: '12px', color: '#64748b' }}>Reporter: {link.user?.name}</div>
-                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(link.dateTime).toLocaleDateString()}</div>
+                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{formatDateTime(link.dateTime)}</div>
                                         </div>
                                         <button
-                                            onClick={() => handleLinkItem(link.id || link._id)}
+                                            onClick={() => handleLinkItem(getItemId(link))}
                                             style={{ padding: '8px 16px', background: '#6c5ce7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
                                         >
                                             Link
@@ -750,13 +801,51 @@ const FoundItemsManagement = () => {
                 setNewItem={setNewItem}
                 onSubmit={handleAddNewItem}
                 updating={updating}
+                categories={categories}
             />
+            {/* DISPOSAL APPROVAL MODAL */}
+            {showDisposalModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2500, backdropFilter: 'blur(8px)' }}>
+                    <div style={{ background: 'white', borderRadius: '20px', maxWidth: '480px', width: '90%', overflow: 'hidden', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+                        <div style={{ padding: '24px 28px', background: '#ef4444', color: 'white' }}>
+                            <h3 style={{ margin: 0, fontWeight: '800', color: 'white' }}>Confirm Disposal Approval</h3>
+                            <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px' }}>Administrative approval is required to permanently dispose of an item.</div>
+                        </div>
+                        <div style={{ padding: '28px' }}>
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8', marginBottom: '10px', display: 'block', letterSpacing: '1px' }}>OFFICIAL REASON FOR DISPOSAL *</label>
+                                <textarea 
+                                    value={disposalReason} 
+                                    onChange={(e) => setDisposalReason(e.target.value)}
+                                    placeholder="Explain why this item is being disposed (e.g., Perishable, Damaged beyond repair, Stored > 90 days)..."
+                                    style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '120px', fontSize: '14px', outline: 'none' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button 
+                                    onClick={handleDisposeItem} 
+                                    disabled={updating || !disposalReason.trim()}
+                                    style={{ flex: 1, padding: '14px', background: '#ef4444', borderRadius: '12px', fontWeight: '800', border: 'none', color: 'white', cursor: 'pointer' }}
+                                >
+                                    {updating ? 'Recording Approval...' : 'Confirm & Log Disposal'}
+                                </button>
+                                <button 
+                                    onClick={() => setShowDisposalModal(false)}
+                                    style={{ padding: '14px 24px', background: '#f1f5f9', borderRadius: '12px', fontWeight: '700', border: 'none', color: '#64748b', cursor: 'pointer' }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-/* Component for Direct Found Item Entry */
-const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating }) => {
+/* Component for Direct Found Item Entry — now with dynamic categories and location dropdown */
+const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating, categories }) => {
     if (!isOpen) return null;
 
     return (
@@ -784,13 +873,9 @@ const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating
                             required
                         >
                             <option value="">Select Category</option>
-                            <option value="DEVICES">Devices</option>
-                            <option value="DOCUMENTS">Documents</option>
-                            <option value="ACCESSORIES">Accessories</option>
-                            <option value="KEYS">Keys</option>
-                            <option value="JEWELLERY">Jewellery</option>
-                            <option value="BOOKS">Books</option>
-                            <option value="OTHERS">Others</option>
+                            {(categories && categories.length > 0 ? categories : ['DEVICES', 'DOCUMENTS', 'ACCESSORIES', 'KEYS', 'JEWELLERY', 'BOOKS', 'OTHERS']).map(cat => (
+                                <option key={cat} value={cat}>{cat.replace(/_/g, ' ')}</option>
+                            ))}
                         </select>
                     </div>
                     <div style={{ marginBottom: '15px' }}>
@@ -805,14 +890,17 @@ const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <div>
                             <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>FOUND AT</label>
-                            <input
-                                type="text"
+                            <select
                                 style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
-                                placeholder="Location"
                                 value={newItem.location}
                                 onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
                                 required
-                            />
+                            >
+                                <option value="">Select Location</option>
+                                {CAMPUS_LOCATIONS.map(loc => (
+                                    <option key={loc} value={loc}>{loc}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>STORAGE SLOT</label>
@@ -863,6 +951,7 @@ const AddItemModal = ({ isOpen, onClose, newItem, setNewItem, onSubmit, updating
                     </button>
                 </form>
             </div>
+
         </div>
     );
 };

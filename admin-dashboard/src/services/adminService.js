@@ -21,6 +21,29 @@ const adminService = {
     verifyClaim: (claimId, status, remarks) =>
         api.put(`/claims/${claimId}/verify?status=${status}`, { remarks }),
 
+    // NEW: Claim Full Context (Issue 1)
+    getClaimFullContext: (claimId) => api.get(`/admin/claims/${claimId}/full-context`),
+
+    // NEW: Prioritized Claims (Issue 2)
+    getPrioritizedClaims: () => api.get('/admin/claims/prioritized'),
+
+    // NEW: Claim Messaging (Issue 3)
+    sendClaimMessage: (claimId, message, requireResponse = false) =>
+        api.post(`/admin/claims/${claimId}/message`, { message, require_response: requireResponse }),
+    getClaimMessages: (claimId) => api.get(`/admin/claims/${claimId}/messages`),
+    rejectClaimWithReason: (claimId, reason, remarks = null) =>
+        api.put(`/admin/claims/${claimId}/reject-with-reason`, { reason, remarks }),
+
+    // NEW: Storage Management (Issue 4)
+    getStorageInventory: () => api.get('/admin/storage/inventory'),
+    getStorageLocations: () => api.get('/admin/storage/locations'),
+    getStorageReport: () => api.get('/admin/storage/report'),
+
+    // NEW: Advanced Analytics (Issue 5)
+    getAnalyticsTrends: (days = 30) => api.get(`/admin/analytics/trends?days=${days}`),
+    getBottleneckAnalysis: () => api.get('/admin/analytics/bottlenecks'),
+    getCategoryPerformance: () => api.get('/admin/analytics/category-performance'),
+
     // Profile & Logs
     getProfile: () => api.get('/admin/profile'),
     getLoginHistory: () => api.get('/admin/login-history'),
@@ -30,8 +53,10 @@ const adminService = {
     getNotifications: (unreadOnly = false) => api.get(`/admin/notifications?unread_only=${unreadOnly}`),
     markNotificationRead: (id) => api.put(`/admin/notifications/${id}/read`),
 
-    // New Enhanced Features
-    addFoundItem: (formData) => api.post('/admin/items/found', formData),
+    // Existing Enhanced Features
+    addFoundItem: (formData) => api.post('/admin/items/found', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     getMatches: () => api.get('/admin/items/matches'),
     handoverItem: (itemId, handoverData) => api.post(`/admin/items/${itemId}/handover`, handoverData),
     archiveItem: (itemId) => api.post(`/admin/items/${itemId}/archive`),
@@ -40,6 +65,12 @@ const adminService = {
     getItemContext: (itemId) => api.get(`/admin/items/${itemId}/context`),
     linkItems: (itemId, linkedItemId) => api.put(`/admin/items/${itemId}/link`, { linked_item_id: linkedItemId }),
     notifyOwner: (itemId, remarks) => api.post(`/admin/items/${itemId}/notify-owner`, { remarks }),
+
+    // Item Status Actions
+    updateItemStatus: (itemId, status) => api.put(`/admin/items/${itemId}/assign-storage`, { storage_location: '', status }),
+
+    // Categories (from category breakdown)
+    getCategories: () => api.get('/admin/stats/category-breakdown'),
 
     // Helpers
     getBaseUrl: () => 'http://127.0.0.1:8080'

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Form, UploadFile, File
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import os
 import shutil
 from bson import ObjectId
 from pydantic import BaseModel
+import math
+import os
+import shutil
 from app.core.database import get_database
 from app.models.enums import Role, ItemStatus, ItemType
 from app.models.user_model import UserResponse
@@ -32,6 +35,14 @@ class BroadcastRequest(BaseModel):
     title: str
     message: str
     category: Optional[str] = "SYSTEM"
+
+class ClaimMessageRequest(BaseModel):
+    message: str
+    require_response: Optional[bool] = False
+
+class ClaimRejectRequest(BaseModel):
+    reason: str
+    remarks: Optional[str] = None
 
 
 # ============ DASHBOARD STATISTICS ============
@@ -873,3 +884,777 @@ async def notify_lost_item_owner(
     })
     
     return {"message": "Owner notified successfully"}
+
+
+# ============ ISSUE 1: CLAIM FULL CONTEXT WITH SIDE-BY-SIDE COMPARISON ============
+
+@router.get("/claims/{claim_id}/full-context")
+async def get_claim_full_context(
+    claim_id: str,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get complete context for a claim: found item, matching lost reports, claimant info, and claim proof - all in one view"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(claim_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid claim ID")
+    
+    # Get the claim
+    claim = await db["claims"].find_one({"_id": obj_id})
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    claim["_id"] = str(claim["_id"])
+    
+    # Get the found item being claimed
+    found_item = None
+    if claim.get("item_id"):
+        try:
+            found_item = await db["items"].find_one({"_id": ObjectId(claim["item_id"])})
+            if found_item:
+                found_item["_id"] = str(found_item["_id"])
+                # Get the reporter of the found item
+                if found_item.get("user_id"):
+                    reporter = await db["users"].find_one({"_id": ObjectId(found_item["user_id"])})
+                    if reporter:
+                        reporter["_id"] = str(reporter["_id"])
+                        found_item["reporter"] = reporter
+        except:
+            pass
+    
+    # Get linked lost item (if any)
+    linked_lost_item = None
+    if found_item and found_item.get("linked_item_id"):
+        try:
+            linked_lost_item = await db["items"].find_one({"_id": ObjectId(found_item["linked_item_id"])})
+            if linked_lost_item:
+                linked_lost_item["_id"] = str(linked_lost_item["_id"])
+                if linked_lost_item.get("user_id"):
+                    lost_reporter = await db["users"].find_one({"_id": ObjectId(linked_lost_item["user_id"])})
+                    if lost_reporter:
+                        lost_reporter["_id"] = str(lost_reporter["_id"])
+                        linked_lost_item["reporter"] = lost_reporter
+        except:
+            pass
+    
+    # Find matching lost reports (same category, open status)
+    matching_lost_reports = []
+    if found_item:
+        lost_cursor = db["items"].find({
+            "type": "LOST",
+            "category": found_item.get("category"),
+            "status": {"$in": ["OPEN", "AVAILABLE"]}
+        }).limit(5)
+        lost_items = await lost_cursor.to_list(length=5)
+        for li in lost_items:
+            li["_id"] = str(li["_id"])
+            # Calculate similarity score
+            f_desc = (found_item.get("description") or "").lower()
+            l_desc = (li.get("description") or "").lower()
+            f_words = set(w for w in f_desc.split() if len(w) > 3)
+            l_words = set(w for w in l_desc.split() if len(w) > 3)
+            common = f_words.intersection(l_words)
+            similarity = len(common) / max(len(f_words | l_words), 1) * 100
+            li["similarity_score"] = round(similarity, 1)
+            li["shared_keywords"] = list(common)
+            # Populate user
+            if li.get("user_id"):
+                try:
+                    u = await db["users"].find_one({"_id": ObjectId(li["user_id"])})
+                    if u:
+                        u["_id"] = str(u["_id"])
+                        li["reporter"] = u
+                except:
+                    pass
+            matching_lost_reports.append(li)
+        matching_lost_reports.sort(key=lambda x: x["similarity_score"], reverse=True)
+    
+    # Get claimant details
+    claimant = None
+    if claim.get("claimant_id"):
+        try:
+            claimant = await db["users"].find_one({"_id": ObjectId(claim["claimant_id"])})
+            if claimant:
+                claimant["_id"] = str(claimant["_id"])
+                # Get claimant's other claims
+                other_claims_cursor = db["claims"].find({"claimant_id": str(claim["claimant_id"])})
+                other_claims = await other_claims_cursor.to_list(length=20)
+                claimant["total_claims"] = len(other_claims)
+                claimant["approved_claims"] = len([c for c in other_claims if c.get("status") == "APPROVED"])
+                claimant["rejected_claims"] = len([c for c in other_claims if c.get("status") == "REJECTED"])
+        except:
+            pass
+    
+    # Get other claims on the same item
+    other_claims = []
+    if claim.get("item_id"):
+        claims_cursor = db["claims"].find({
+            "item_id": claim["item_id"],
+            "_id": {"$ne": obj_id}
+        })
+        other_claims_list = await claims_cursor.to_list(length=10)
+        for oc in other_claims_list:
+            oc["_id"] = str(oc["_id"])
+            if oc.get("claimant_id"):
+                try:
+                    oc_user = await db["users"].find_one({"_id": ObjectId(oc["claimant_id"])})
+                    if oc_user:
+                        oc_user["_id"] = str(oc_user["_id"])
+                        oc["claimant"] = oc_user
+                except:
+                    pass
+            other_claims.append(oc)
+    
+    # Get message history for this claim
+    messages_cursor = db["claim_messages"].find({"claim_id": claim_id}).sort("sent_at", 1)
+    messages = await messages_cursor.to_list(length=50)
+    for m in messages:
+        m["_id"] = str(m["_id"])
+    
+    return {
+        "claim": claim,
+        "found_item": found_item,
+        "linked_lost_item": linked_lost_item,
+        "matching_lost_reports": matching_lost_reports,
+        "claimant": claimant,
+        "other_claims_on_item": other_claims,
+        "messages": messages
+    }
+
+
+# ============ ISSUE 2: CLAIM PRIORITIZATION ============
+
+@router.get("/claims/prioritized")
+async def get_prioritized_claims(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get all pending claims with priority scoring"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    cursor = db["claims"].find({"status": "PENDING"}).sort("submissionDate", 1)
+    claims_list = await cursor.to_list(length=200)
+    
+    high_value_categories = ["DEVICES", "KEYS", "JEWELLERY", "DOCUMENTS"]
+    now = datetime.utcnow()
+    
+    scored_claims = []
+    for c in claims_list:
+        c["_id"] = str(c["_id"])
+        c["id"] = c["_id"]
+        
+        # Calculate priority score (0-100)
+        score = 0
+        reasons = []
+        
+        # Factor 1: Age of claim (older = higher priority)
+        submission_date = c.get("submissionDate")
+        if submission_date:
+            if isinstance(submission_date, str):
+                submission_date = datetime.fromisoformat(submission_date)
+            days_pending = (now - submission_date).days
+            hours_pending = (now - submission_date).total_seconds() / 3600
+            c["hours_pending"] = round(hours_pending, 1)
+            c["days_pending"] = days_pending
+            if days_pending >= 3:
+                score += 40
+                reasons.append(f"Pending {days_pending} days")
+            elif days_pending >= 1:
+                score += 25
+                reasons.append(f"Pending {days_pending} day(s)")
+            elif hours_pending >= 6:
+                score += 15
+                reasons.append(f"Pending {round(hours_pending)}h")
+        
+        # Factor 2: Item category value
+        item = None
+        if c.get("item_id"):
+            try:
+                item = await db["items"].find_one({"_id": ObjectId(c["item_id"])})
+                if item:
+                    item["_id"] = str(item["_id"])
+                    c["item"] = item
+                    if item.get("category") in high_value_categories:
+                        score += 20
+                        reasons.append(f"High-value: {item['category']}")
+            except:
+                pass
+        
+        # Factor 3: Multiple claims on same item (contention)
+        if c.get("item_id"):
+            claim_count = await db["claims"].count_documents({"item_id": c["item_id"], "status": "PENDING"})
+            if claim_count > 1:
+                score += 15
+                reasons.append(f"{claim_count} competing claims")
+            c["competing_claims"] = claim_count
+        
+        # Factor 4: Has proof image (faster to verify)
+        if c.get("proofImageUrl"):
+            score += 5
+            reasons.append("Has proof image")
+        
+        # Factor 5: Claimant history (trusted vs new)
+        if c.get("claimant_id"):
+            try:
+                user = await db["users"].find_one({"_id": ObjectId(c["claimant_id"])})
+                if user:
+                    user["_id"] = str(user["_id"])
+                    c["claimant"] = user
+                prev_approved = await db["claims"].count_documents({"claimant_id": c["claimant_id"], "status": "APPROVED"})
+                prev_rejected = await db["claims"].count_documents({"claimant_id": c["claimant_id"], "status": "REJECTED"})
+                if prev_rejected > prev_approved and prev_rejected > 0:
+                    score += 10
+                    reasons.append("History: more rejections")
+                c["claimant_history"] = {"approved": prev_approved, "rejected": prev_rejected}
+            except:
+                pass
+        
+        # Determine priority level
+        if score >= 50:
+            priority = "URGENT"
+        elif score >= 30:
+            priority = "HIGH"
+        elif score >= 15:
+            priority = "MEDIUM"
+        else:
+            priority = "NORMAL"
+        
+        c["priority_score"] = min(score, 100)
+        c["priority_level"] = priority
+        c["priority_reasons"] = reasons
+        
+        scored_claims.append(c)
+    
+    # Sort by priority score descending
+    scored_claims.sort(key=lambda x: x["priority_score"], reverse=True)
+    
+    return scored_claims
+
+
+# ============ ISSUE 3: ADMIN-CLAIMANT COMMUNICATION ============
+
+@router.post("/claims/{claim_id}/message")
+async def send_claim_message(
+    claim_id: str,
+    msg: ClaimMessageRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Send a message to a claimant about their claim"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(claim_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid claim ID")
+    
+    claim = await db["claims"].find_one({"_id": obj_id})
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Store message
+    message_doc = {
+        "claim_id": claim_id,
+        "sender_id": str(current_user.id),
+        "sender_name": current_user.name,
+        "sender_role": "ADMIN",
+        "message": msg.message,
+        "require_response": msg.require_response,
+        "sent_at": datetime.utcnow(),
+        "read": False
+    }
+    
+    result = await db["claim_messages"].insert_one(message_doc)
+    message_doc["_id"] = str(result.inserted_id)
+    
+    # Send notification to claimant
+    if claim.get("claimant_id"):
+        action_text = " Please respond with additional information." if msg.require_response else ""
+        notification = {
+            "user_id": str(claim["claimant_id"]),
+            "title": "Message from Admin regarding your claim",
+            "message": f"{msg.message}{action_text}",
+            "type": "CLAIM_MESSAGE",
+            "related_id": claim_id,
+            "read": False,
+            "created_at": datetime.utcnow()
+        }
+        await db["notifications"].insert_one(notification)
+    
+    # Audit
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "CLAIM_MESSAGE_SENT",
+        "target_type": "CLAIM",
+        "target_id": claim_id,
+        "details": {"message_preview": msg.message[:100], "require_response": msg.require_response},
+        "timestamp": datetime.utcnow()
+    })
+    
+    return message_doc
+
+
+@router.get("/claims/{claim_id}/messages")
+async def get_claim_messages(
+    claim_id: str,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get all messages for a claim"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    cursor = db["claim_messages"].find({"claim_id": claim_id}).sort("sent_at", 1)
+    messages = await cursor.to_list(length=100)
+    for m in messages:
+        m["_id"] = str(m["_id"])
+    return messages
+
+
+@router.put("/claims/{claim_id}/reject-with-reason")
+async def reject_claim_with_reason(
+    claim_id: str,
+    rejection: ClaimRejectRequest,
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Reject a claim with a mandatory reason that gets sent to the claimant"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        obj_id = ObjectId(claim_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid claim ID")
+    
+    claim = await db["claims"].find_one({"_id": obj_id})
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Update claim
+    update_data = {
+        "status": "REJECTED",
+        "rejection_reason": rejection.reason,
+        "admin_remarks": rejection.remarks or rejection.reason,
+        "rejected_at": datetime.utcnow(),
+        "rejected_by": str(current_user.id),
+        "rejected_by_name": current_user.name
+    }
+    
+    await db["claims"].update_one({"_id": obj_id}, {"$set": update_data})
+    
+    # Send rich notification to claimant with reason
+    if claim.get("claimant_id"):
+        item = None
+        if claim.get("item_id"):
+            try:
+                item = await db["items"].find_one({"_id": ObjectId(claim["item_id"])})
+            except:
+                pass
+        
+        notification = {
+            "user_id": str(claim["claimant_id"]),
+            "title": "Claim Update: Not Approved",
+            "message": f"Your claim for {item.get('category', 'an item') if item else 'an item'} was not approved. Reason: {rejection.reason}",
+            "type": "CLAIM_REJECTED",
+            "related_id": claim_id,
+            "read": False,
+            "created_at": datetime.utcnow()
+        }
+        await db["notifications"].insert_one(notification)
+    
+    # Audit log
+    await db["audit_logs"].insert_one({
+        "admin_id": str(current_user.id),
+        "admin_name": current_user.name,
+        "action": "CLAIM_REJECTED_WITH_REASON",
+        "target_type": "CLAIM",
+        "target_id": claim_id,
+        "details": {"reason": rejection.reason, "remarks": rejection.remarks},
+        "timestamp": datetime.utcnow()
+    })
+    
+    updated = await db["claims"].find_one({"_id": obj_id})
+    if updated:
+        updated["_id"] = str(updated["_id"])
+    return updated
+
+
+# ============ ISSUE 4: STORAGE MANAGEMENT ============
+
+@router.get("/storage/inventory")
+async def get_storage_inventory(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get complete storage inventory - what's in each storage location"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Find all items that have storage locations
+    cursor = db["items"].find({
+        "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+        "status": {"$in": ["AVAILABLE", "PENDING", "CLAIMED"]}
+    }).sort("storage_location", 1)
+    
+    items = await cursor.to_list(length=500)
+    
+    # Group by storage location
+    locations = {}
+    for item in items:
+        item["_id"] = str(item["_id"])
+        loc = item.get("storage_location", "Unassigned")
+        if loc not in locations:
+            locations[loc] = {
+                "location": loc,
+                "items": [],
+                "total_items": 0,
+                "categories": {},
+                "oldest_item_date": None,
+                "newest_item_date": None
+            }
+        locations[loc]["items"].append(item)
+        locations[loc]["total_items"] += 1
+        cat = item.get("category", "OTHER")
+        locations[loc]["categories"][cat] = locations[loc]["categories"].get(cat, 0) + 1
+        
+        item_date = item.get("dateTime") or item.get("verified_at")
+        if item_date:
+            if locations[loc]["oldest_item_date"] is None or item_date < locations[loc]["oldest_item_date"]:
+                locations[loc]["oldest_item_date"] = item_date
+            if locations[loc]["newest_item_date"] is None or item_date > locations[loc]["newest_item_date"]:
+                locations[loc]["newest_item_date"] = item_date
+    
+    # Build summary
+    total_stored = sum(loc["total_items"] for loc in locations.values())
+    unassigned = await db["items"].count_documents({
+        "type": "FOUND",
+        "status": {"$in": ["AVAILABLE", "PENDING"]},
+        "$or": [
+            {"storage_location": {"$exists": False}},
+            {"storage_location": None},
+            {"storage_location": ""}
+        ]
+    })
+    
+    return {
+        "summary": {
+            "total_locations": len(locations),
+            "total_stored_items": total_stored,
+            "unassigned_items": unassigned
+        },
+        "locations": list(locations.values())
+    }
+
+
+@router.get("/storage/locations")
+async def get_storage_locations_list(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get list of all unique storage locations with item counts"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    pipeline = [
+        {"$match": {
+            "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+            "status": {"$in": ["AVAILABLE", "PENDING", "CLAIMED"]}
+        }},
+        {"$group": {
+            "_id": "$storage_location",
+            "count": {"$sum": 1},
+            "categories": {"$addToSet": "$category"}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    
+    results = []
+    async for doc in db["items"].aggregate(pipeline):
+        results.append({
+            "location": doc["_id"],
+            "item_count": doc["count"],
+            "categories": doc["categories"]
+        })
+    
+    return results
+
+
+@router.get("/storage/report")
+async def get_storage_report(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Generate a comprehensive storage report"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    now = datetime.utcnow()
+    
+    # Items stored more than 30 days
+    old_items_cursor = db["items"].find({
+        "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+        "status": {"$in": ["AVAILABLE", "PENDING"]},
+        "dateTime": {"$lte": now - timedelta(days=30)}
+    })
+    old_items = await old_items_cursor.to_list(length=100)
+    for item in old_items:
+        item["_id"] = str(item["_id"])
+        item_date = item.get("dateTime")
+        if item_date:
+            item["days_stored"] = (now - item_date).days
+    
+    # Items stored more than 7 days but less than 30
+    medium_items = await db["items"].count_documents({
+        "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+        "status": {"$in": ["AVAILABLE", "PENDING"]},
+        "dateTime": {
+            "$gte": now - timedelta(days=30),
+            "$lte": now - timedelta(days=7)
+        }
+    })
+    
+    # Recently stored (last 7 days)
+    recent_items = await db["items"].count_documents({
+        "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+        "status": {"$in": ["AVAILABLE", "PENDING"]},
+        "dateTime": {"$gte": now - timedelta(days=7)}
+    })
+    
+    # High-value items in storage
+    high_value = await db["items"].count_documents({
+        "storage_location": {"$exists": True, "$ne": None, "$ne": ""},
+        "status": {"$in": ["AVAILABLE", "PENDING"]},
+        "category": {"$in": ["DEVICES", "KEYS", "JEWELLERY"]}
+    })
+    
+    return {
+        "aging_report": {
+            "over_30_days": len(old_items),
+            "7_to_30_days": medium_items,
+            "under_7_days": recent_items,
+            "old_items_detail": old_items
+        },
+        "high_value_in_storage": high_value,
+        "generated_at": now.isoformat()
+    }
+
+
+# ============ ISSUE 5: ADVANCED ANALYTICS ============
+
+@router.get("/analytics/trends")
+async def get_analytics_trends(
+    days: int = Query(30, description="Number of days to analyze"),
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get trend data for items and claims over time"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    now = datetime.utcnow()
+    start_date = now - timedelta(days=days)
+    
+    # Daily lost/found item trends
+    daily_trends = []
+    for i in range(days):
+        day_start = (start_date + timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        lost_count = await db["items"].count_documents({
+            "type": "LOST",
+            "dateTime": {"$gte": day_start, "$lt": day_end}
+        })
+        found_count = await db["items"].count_documents({
+            "type": "FOUND",
+            "dateTime": {"$gte": day_start, "$lt": day_end}
+        })
+        resolved_count = await db["items"].count_documents({
+            "status": {"$in": ["RETURNED", "RESOLVED"]},
+            "handed_over_at": {"$gte": day_start, "$lt": day_end}
+        })
+        claims_count = await db["claims"].count_documents({
+            "submissionDate": {"$gte": day_start, "$lt": day_end}
+        })
+        
+        daily_trends.append({
+            "date": day_start.strftime("%Y-%m-%d"),
+            "lost": lost_count,
+            "found": found_count,
+            "resolved": resolved_count,
+            "claims": claims_count
+        })
+    
+    return daily_trends
+
+
+@router.get("/analytics/bottlenecks")
+async def get_bottleneck_analysis(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Identify bottlenecks in the system"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    now = datetime.utcnow()
+    
+    # 1. Average time from found to returned (resolution time)
+    returned_items_cursor = db["items"].find({
+        "type": "FOUND",
+        "status": {"$in": ["RETURNED", "RESOLVED"]},
+        "dateTime": {"$exists": True},
+        "handed_over_at": {"$exists": True}
+    })
+    returned_items = await returned_items_cursor.to_list(length=200)
+    
+    resolution_times = []
+    for item in returned_items:
+        if item.get("dateTime") and item.get("handed_over_at"):
+            delta = (item["handed_over_at"] - item["dateTime"]).total_seconds() / 3600
+            resolution_times.append(delta)
+    
+    avg_resolution_hours = round(sum(resolution_times) / len(resolution_times), 1) if resolution_times else 0
+    
+    # 2. Average claim processing time
+    processed_claims_cursor = db["claims"].find({
+        "status": {"$in": ["APPROVED", "REJECTED"]},
+        "submissionDate": {"$exists": True}
+    })
+    processed_claims = await processed_claims_cursor.to_list(length=200)
+    
+    claim_processing_times = []
+    for claim in processed_claims:
+        submit_date = claim.get("submissionDate")
+        # Use rejected_at or a heuristic
+        end_date = claim.get("rejected_at") or claim.get("verified_at")
+        if not end_date:
+            # Estimate from audit logs
+            audit = await db["audit_logs"].find_one({
+                "target_id": str(claim["_id"]),
+                "action": {"$regex": "CLAIM_"}
+            }, sort=[("timestamp", -1)])
+            if audit:
+                end_date = audit.get("timestamp")
+        if submit_date and end_date:
+            delta = (end_date - submit_date).total_seconds() / 3600
+            claim_processing_times.append(delta)
+    
+    avg_claim_hours = round(sum(claim_processing_times) / len(claim_processing_times), 1) if claim_processing_times else 0
+    
+    # 3. Slowest categories (most items still pending)
+    categories = ["DOCUMENTS", "DEVICES", "ACCESSORIES", "PERSONAL_ITEMS", "KEYS", "BOOKS", "JEWELLERY", "OTHERS"]
+    category_bottlenecks = []
+    for cat in categories:
+        pending = await db["items"].count_documents({"category": cat, "status": {"$in": ["PENDING", "AVAILABLE"]}})
+        total = await db["items"].count_documents({"category": cat})
+        resolved = await db["items"].count_documents({"category": cat, "status": {"$in": ["RETURNED", "RESOLVED"]}})
+        rate = round((resolved / total * 100), 1) if total > 0 else 0
+        category_bottlenecks.append({
+            "category": cat,
+            "pending_items": pending,
+            "total_items": total,
+            "resolved_items": resolved,
+            "resolution_rate": rate
+        })
+    
+    category_bottlenecks.sort(key=lambda x: x["resolution_rate"])
+    
+    # 4. Stale items (available but no claims for >7 days)
+    stale_items_count = await db["items"].count_documents({
+        "status": "AVAILABLE",
+        "dateTime": {"$lte": now - timedelta(days=7)}
+    })
+    
+    # 5. Pending claims older than 24 hours
+    old_pending_claims = await db["claims"].count_documents({
+        "status": "PENDING",
+        "submissionDate": {"$lte": now - timedelta(hours=24)}
+    })
+    
+    # 6. Unverified items
+    unverified_items = await db["items"].count_documents({
+        "status": "PENDING"
+    })
+    
+    return {
+        "resolution_time": {
+            "avg_hours": avg_resolution_hours,
+            "sample_size": len(resolution_times)
+        },
+        "claim_processing_time": {
+            "avg_hours": avg_claim_hours,
+            "sample_size": len(claim_processing_times)
+        },
+        "category_performance": category_bottlenecks,
+        "stale_available_items": stale_items_count,
+        "overdue_pending_claims": old_pending_claims,
+        "unverified_items": unverified_items,
+        "bottleneck_alerts": [
+            alert for alert in [
+                {"type": "OVERDUE_CLAIMS", "message": f"{old_pending_claims} claims pending > 24h", "severity": "HIGH"} if old_pending_claims > 0 else None,
+                {"type": "STALE_ITEMS", "message": f"{stale_items_count} items available > 7 days with no claims", "severity": "MEDIUM"} if stale_items_count > 0 else None,
+                {"type": "UNVERIFIED", "message": f"{unverified_items} items awaiting verification", "severity": "LOW"} if unverified_items > 0 else None,
+                {"type": "SLOW_RESOLUTION", "message": f"Avg resolution: {avg_resolution_hours}h", "severity": "HIGH"} if avg_resolution_hours > 72 else None,
+            ] if alert is not None
+        ]
+    }
+
+
+@router.get("/analytics/category-performance")
+async def get_category_performance(
+    current_user: UserResponse = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Detailed performance per category"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    categories = ["DOCUMENTS", "DEVICES", "ACCESSORIES", "PERSONAL_ITEMS", "KEYS", "BOOKS", "JEWELLERY", "OTHERS"]
+    now = datetime.utcnow()
+    
+    results = []
+    for cat in categories:
+        total_lost = await db["items"].count_documents({"type": "LOST", "category": cat})
+        total_found = await db["items"].count_documents({"type": "FOUND", "category": cat})
+        returned = await db["items"].count_documents({"category": cat, "status": {"$in": ["RETURNED", "RESOLVED"]}})
+        pending = await db["items"].count_documents({"category": cat, "status": {"$in": ["PENDING", "AVAILABLE"]}})
+        
+        # Claims stats for this category
+        items_in_cat_cursor = db["items"].find({"category": cat}, {"_id": 1})
+        items_in_cat = await items_in_cat_cursor.to_list(length=500)
+        item_ids = [str(item["_id"]) for item in items_in_cat]
+        
+        total_claims = await db["claims"].count_documents({"item_id": {"$in": item_ids}}) if item_ids else 0
+        approved_claims = await db["claims"].count_documents({"item_id": {"$in": item_ids}, "status": "APPROVED"}) if item_ids else 0
+        
+        # Last 7 days activity
+        recent_lost = await db["items"].count_documents({
+            "type": "LOST", "category": cat,
+            "dateTime": {"$gte": now - timedelta(days=7)}
+        })
+        recent_found = await db["items"].count_documents({
+            "type": "FOUND", "category": cat,
+            "dateTime": {"$gte": now - timedelta(days=7)}
+        })
+        
+        results.append({
+            "category": cat,
+            "total_lost": total_lost,
+            "total_found": total_found,
+            "returned": returned,
+            "pending": pending,
+            "recovery_rate": round((returned / max(total_found, 1)) * 100, 1),
+            "total_claims": total_claims,
+            "approval_rate": round((approved_claims / max(total_claims, 1)) * 100, 1),
+            "recent_7d": {"lost": recent_lost, "found": recent_found}
+        })
+    
+    results.sort(key=lambda x: x["total_lost"] + x["total_found"], reverse=True)
+    return results

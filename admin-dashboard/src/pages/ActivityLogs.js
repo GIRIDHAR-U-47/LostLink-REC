@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import adminService from '../services/adminService';
+import { formatDateTime } from '../utils/helpers';
 
 const ActivityLogs = () => {
     const [logs, setLogs] = useState([]);
@@ -64,9 +65,7 @@ const ActivityLogs = () => {
                                 logs.map((log, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.2s' }}>
                                         <td style={{ padding: '20px', fontSize: '13px', color: '#475569', whiteSpace: 'nowrap' }}>
-                                            {new Date(log.timestamp).toLocaleString(undefined, {
-                                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
-                                            })}
+                                            {formatDateTime(log.timestamp)}
                                         </td>
                                         <td style={{ padding: '20px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -95,8 +94,8 @@ const ActivityLogs = () => {
                                         <td style={{ padding: '20px', fontSize: '13px', color: '#64748b' }}>
                                             <span style={{ fontWeight: '600', color: '#475569' }}>{log.target_type}</span>
                                             <span style={{ margin: '0 5px' }}>•</span>
-                                            <code style={{ fontSize: '11px', backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
-                                                {log.target_id ? log.target_id.slice(-8) : 'N/A'}
+                                            <code style={{ fontSize: '11px', backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#6c5ce7', fontWeight: 'bold' }}>
+                                                {log.target_id ? log.target_id.slice(-6).toUpperCase() : 'N/A'}
                                             </code>
                                         </td>
                                         <td style={{ padding: '20px' }}>

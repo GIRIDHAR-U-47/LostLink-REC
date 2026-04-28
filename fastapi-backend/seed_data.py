@@ -2,18 +2,17 @@
 import logging
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-from passlib.context import CryptContext
+import bcrypt
 import os
 
 # Configuration
 MONGODB_URL = "mongodb://localhost:27017"
 DATABASE_NAME = "lostlink_db_review" 
 
-# Setup Password Hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    pw_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pw_bytes, salt).decode("utf-8")
 
 def seed_data():
     client = MongoClient(MONGODB_URL)

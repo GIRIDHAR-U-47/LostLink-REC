@@ -3,7 +3,7 @@ import {
     View, Text, FlatList, StyleSheet, ActivityIndicator,
     TouchableOpacity, TextInput, Image, Modal, ScrollView, Alert
 } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 
 const AdminLostItemsScreen = ({ navigation }) => {

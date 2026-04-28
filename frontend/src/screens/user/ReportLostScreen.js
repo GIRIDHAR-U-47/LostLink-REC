@@ -82,7 +82,7 @@ const ReportLostScreen = ({ navigation }) => {
 
             // Note: Sending FormData. Content-Type header will be automatically set or needs explicit 'multipart/form-data' depending on interceptor
             // Since api.js sets 'application/json', we override it here.
-            await api.post('/items/report', formData, {
+            await api.post('/api/items/report', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

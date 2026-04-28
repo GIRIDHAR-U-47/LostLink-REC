@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import adminService from '../services/adminService';
+import { getTrackingId } from '../utils/helpers';
 
 const MatchingSupervision = () => {
     const [matches, setMatches] = useState([]);
@@ -63,7 +64,7 @@ const MatchingSupervision = () => {
                             <div style={{ flex: 1, backgroundColor: '#f0fdf4', padding: '20px', borderRadius: '16px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <label style={{ fontSize: '10px', fontWeight: '800', color: '#059669', textTransform: 'uppercase' }}>FOUND ITEM ENTRY</label>
-                                    <span style={{ fontSize: '10px', color: '#64748b' }}>ID: {match.found_item._id.slice(-6)}</span>
+                                    <span style={{ fontSize: '10px', color: '#64748b' }}>ID: {getTrackingId(match.found_item)}</span>
                                 </div>
                                 <h3 style={{ margin: '8px 0', color: '#064e3b' }}>{match.found_item.category}</h3>
                                 <p style={{ fontSize: '14px', color: '#374151', margin: '10px 0' }}>{match.found_item.description}</p>
@@ -91,7 +92,7 @@ const MatchingSupervision = () => {
                             <div style={{ flex: 1, backgroundColor: '#eff6ff', padding: '20px', borderRadius: '16px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <label style={{ fontSize: '10px', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase' }}>LOST ITEM REPORT</label>
-                                    <span style={{ fontSize: '10px', color: '#64748b' }}>ID: {match.lost_item._id.slice(-6)}</span>
+                                    <span style={{ fontSize: '10px', color: '#64748b' }}>ID: {getTrackingId(match.lost_item)}</span>
                                 </div>
                                 <h3 style={{ margin: '8px 0', color: '#1e3a8a' }}>{match.lost_item.category}</h3>
                                 <p style={{ fontSize: '14px', color: '#374151', margin: '10px 0' }}>{match.lost_item.description}</p>

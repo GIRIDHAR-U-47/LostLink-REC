@@ -13,6 +13,7 @@ import MatchingSupervision from './pages/MatchingSupervision';
 import HandoverRecords from './pages/HandoverRecords';
 import Broadcast from './pages/Broadcast';
 import ActivityLogs from './pages/ActivityLogs';
+import StorageManagement from './pages/StorageManagement';
 import Login from './pages/Login';
 
 const App = () => {
@@ -85,6 +86,7 @@ const App = () => {
                             <Route path="/matches" element={<MatchingSupervision />} />
                             <Route path="/handovers" element={<HandoverRecords />} />
                             <Route path="/broadcast" element={<Broadcast />} />
+                            <Route path="/storage" element={<StorageManagement />} />
                             <Route path="/logs" element={<ActivityLogs />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/login" element={<Navigate to="/dashboard" replace />} />

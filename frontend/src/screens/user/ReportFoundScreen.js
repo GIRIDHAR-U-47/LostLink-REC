@@ -82,7 +82,7 @@ const ReportFoundScreen = ({ navigation }) => {
 
             formData.append('image', { uri: localUri, name: filename, type });
 
-            await api.post('/items/report', formData, {
+            await api.post('/api/items/report', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

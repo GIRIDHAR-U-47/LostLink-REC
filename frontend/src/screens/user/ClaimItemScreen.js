@@ -60,7 +60,7 @@ const ClaimItemScreen = ({ route, navigation }) => {
                 formData.append('proof_image', { uri: localUri, name: filename, type });
             }
 
-            await api.post('/claims/submit', formData, {
+            await api.post('/api/claims/submit', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

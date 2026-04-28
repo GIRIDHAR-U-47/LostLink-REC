@@ -3,7 +3,7 @@ import {
     View, Text, StyleSheet, TextInput, TouchableOpacity,
     ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
-import adminAPI from '../../services/adminApi';
+import { adminAPI } from '../../services/adminApi';
 import { COLORS } from '../../constants/theme';
 
 const AdminBroadcastScreen = ({ navigation }) => {
