@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import api from '../../services/api';
+import api, { FILE_BASE_URL } from '../../services/api';
 import { COLORS } from '../../constants/theme';
 
 const MyRequestsScreen = ({ navigation }) => {
@@ -83,7 +83,7 @@ const MyRequestsScreen = ({ navigation }) => {
 
                 {item.imageUrl ? (
                     <Image
-                        source={{ uri: `http://10.234.72.182:8080/${item.imageUrl}` }}
+                        source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
                         style={styles.itemImage}
                         resizeMode="cover"
                     />
@@ -109,7 +109,7 @@ const MyRequestsScreen = ({ navigation }) => {
                                 </Text>
                                 {item.user_claim.proofImageUrl && (
                                     <Image
-                                        source={{ uri: `http://10.234.72.182:8080/${item.user_claim.proofImageUrl}` }}
+                                        source={{ uri: `${FILE_BASE_URL}${item.user_claim.proofImageUrl}` }}
                                         style={styles.proofImage}
                                         resizeMode="cover"
                                     />
@@ -119,6 +119,14 @@ const MyRequestsScreen = ({ navigation }) => {
                                         {item.is_report ? 'Process Status: ' : 'Claim Status: '}{item.user_claim.status}
                                     </Text>
                                 </View>
+                                {item.user_claim.adminRemarks && (
+                                    <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e2e8f0' }}>
+                                        <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 4 }}>Decision Note:</Text>
+                                        <Text style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', lineHeight: 18 }}>
+                                            "{item.user_claim.adminRemarks}"
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                         )}
 

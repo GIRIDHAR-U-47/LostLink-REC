@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 import { formatDateTime, getItemId } from '../utils/helpers';
 
 const ClaimsManagement = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const itemId = queryParams.get('id');
 

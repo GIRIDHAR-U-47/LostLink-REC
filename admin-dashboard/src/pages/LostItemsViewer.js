@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { API_BASE_URL } from '../services/api';
 import { formatDateTime, getRelativeTime, getTrackingId, getItemId, getStatusBadge } from '../utils/helpers';
 
 const LostItemsViewer = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
