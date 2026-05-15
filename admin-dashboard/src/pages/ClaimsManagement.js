@@ -491,10 +491,12 @@ const ClaimsManagement = () => {
                                             <textarea value={messageText} onChange={(e) => setMessageText(e.target.value)}
                                                 placeholder="Ask for more proof, clarify details, or send instructions..."
                                                 style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', minHeight: '60px', fontSize: '13px', resize: 'vertical' }} />
-                                            <label style={{ fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', cursor: 'pointer' }}>
-                                                <input type="checkbox" checked={requireResponse} onChange={(e) => setRequireResponse(e.target.checked)} />
-                                                Request response from claimant
-                                            </label>
+                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center' }}>
+                                                <label style={{ fontSize: '12px', color: '#475569', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                                                    <input type="checkbox" checked={requireResponse} onChange={(e) => setRequireResponse(e.target.checked)} style={{ margin: 0, width: '16px', height: '16px', cursor: 'pointer' }} />
+                                                    <span style={{ fontWeight: '600' }}>Request response from claimant</span>
+                                                </label>
+                                            </div>
                                         </div>
                                         <button onClick={handleSendMessage} disabled={sendingMessage || !messageText.trim()}
                                             style={{ padding: '12px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '12px', background: '#3b82f6', whiteSpace: 'nowrap' }}>
@@ -517,7 +519,7 @@ const ClaimsManagement = () => {
                                         )}
 
                                         {/* Authentication Role Check */}
-                                        {localStorage.getItem('role') === 'ADMIN' ? (
+                                        {(JSON.parse(localStorage.getItem('userInfo') || '{}').roles?.includes('ADMIN') || JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'ADMIN') ? (
                                             <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '1px solid #e2e8f0' }}>
                                                 <div style={{ marginBottom: '16px' }}>
                                                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>Admin Decision Remarks (MANDATORY) *</label>

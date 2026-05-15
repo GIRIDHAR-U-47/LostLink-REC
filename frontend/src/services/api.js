@@ -56,5 +56,5 @@ api.interceptors.response.use(
   }
 );
 
-export const FILE_BASE_URL = BASE_URL;
+export const FILE_BASE_URL = BASE_URL + '/';
 export default api;

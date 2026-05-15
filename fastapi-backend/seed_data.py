@@ -6,8 +6,10 @@ import bcrypt
 import os
 
 # Configuration
-MONGODB_URL = "mongodb://localhost:27017"
-DATABASE_NAME = "lostlink_db_review" 
+from dotenv import load_dotenv
+load_dotenv()
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "lostlink_db_review")
 
 def get_password_hash(password):
     pw_bytes = password.encode("utf-8")[:72]

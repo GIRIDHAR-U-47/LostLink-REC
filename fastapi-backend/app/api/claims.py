@@ -22,6 +22,7 @@ async def submit_claim(
     db = Depends(get_database)
 ):
     from app.core.utils import generate_custom_id
+    from app.core.cloudinary_utils import upload_image
     
     # Verify item exists
     item = await db["items"].find_one({"_id": ObjectId(item_id)})
@@ -30,16 +31,13 @@ async def submit_claim(
 
     image_url = None
     if proof_image:
-        # Create static directory if it doesn't exist
-        image_dir = os.path.join(os.getcwd(), "static", "images", "claims")
-        os.makedirs(image_dir, exist_ok=True)
-        
-        file_location = os.path.join(image_dir, proof_image.filename)
-        with open(file_location, "wb+") as file_object:
-             shutil.copyfileobj(proof_image.file, file_object)
-        
-        # Store relative path for database
-        image_url = f"static/images/claims/{proof_image.filename}"
+        # Upload to Cloudinary instead of local storage
+        uploaded_url = upload_image(proof_image, folder="lostlink/claims")
+        if uploaded_url:
+            image_url = uploaded_url
+            print(f"Proof image uploaded to Cloudinary: {image_url}")
+        else:
+            print("Failed to upload proof image to Cloudinary, continuing without image.")
 
     claim_id = generate_custom_id("CLM")
 

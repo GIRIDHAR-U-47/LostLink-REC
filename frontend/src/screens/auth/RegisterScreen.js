@@ -16,6 +16,17 @@ const RegisterScreen = ({ navigation }) => {
     const { register } = useContext(AuthContext);
 
     const handleRegister = async () => {
+        const lowerEmail = email.toLowerCase();
+        if (!lowerEmail.endsWith('@rajalakshmi.edu.in') && !lowerEmail.endsWith('@rec.edu.in')) {
+            Alert.alert('Invalid Email', 'Please use your college email (@rajalakshmi.edu.in)');
+            return;
+        }
+        
+        if (registerNumber.length !== 9) {
+            Alert.alert('Invalid Register Number', 'Register number must be exactly 9 characters long.');
+            return;
+        }
+
         try {
             await register(name, email, password, registerNumber);
             Alert.alert('Success', 'Registration successful! Please login.');
@@ -97,7 +108,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
     button: {
-        backgroundColor: COLORS.accent, // Purple Accent instead of Maroon
+        backgroundColor: COLORS.primary,
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',

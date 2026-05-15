@@ -148,7 +148,7 @@ const MyRequestsScreen = ({ navigation }) => {
                     </View>
                 )}
 
-                {item.status === 'AVAILABLE' && (
+                {((item.is_claim && item.user_claim?.status === 'APPROVED') || (item.is_report && item.type === 'LOST' && (item.status === 'AVAILABLE' || item.status === 'APPROVED'))) && (
                     <View style={[styles.matchAlert, { backgroundColor: COLORS.success + '15' }]}>
                         <Text style={[styles.matchAlertText, { color: COLORS.success }]}>
                             ✨ Your item has been found! Please visit the Lost & Found office during working hours for collection.

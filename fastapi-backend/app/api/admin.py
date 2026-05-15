@@ -221,14 +221,13 @@ async def admin_add_found_item(
     
     image_url = None
     if image:
-        image_dir = os.path.join(os.getcwd(), "static", "images")
-        os.makedirs(image_dir, exist_ok=True)
-        # Create unique filename
-        filename = f"{int(datetime.utcnow().timestamp())}_{image.filename}"
-        file_location = os.path.join(image_dir, filename)
-        with open(file_location, "wb+") as file_object:
-             shutil.copyfileobj(image.file, file_object)
-        image_url = f"static/images/{filename}"
+        from app.core.cloudinary_utils import upload_image
+        uploaded_url = upload_image(image, folder="lostlink/items")
+        if uploaded_url:
+            image_url = uploaded_url
+            print(f"Image uploaded to Cloudinary: {image_url}")
+        else:
+            print("Failed to upload image to Cloudinary, continuing without image.")
     
     found_id = generate_custom_id("FND")
 

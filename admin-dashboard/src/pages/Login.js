@@ -90,12 +90,6 @@ const Login = ({ onLoginSuccess }) => {
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
-
-                <div className="demo-credentials">
-                    <p><strong>Demo Admin Credentials:</strong></p>
-                    <p>Email: admin@rec.edu.in</p>
-                    <p>Password: admin123</p>
-                </div>
             </div>
         </div>
     );

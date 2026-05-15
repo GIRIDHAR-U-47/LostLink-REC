@@ -10,15 +10,11 @@ export const AuthProvider = ({ children }) => {
     const [userToken, setUserToken] = useState(null);
     const [userInfo, setUserInfo] = useState(null);
 
-    const login = async (email, password, isAdminLogin = false) => {
+    const login = async (email, password) => {
         setIsLoading(true);
         try {
             const response = await api.post('/api/auth/login', { email, password });
             const { token, id, email: userEmail, roles, name, registerNumber } = response.data;
-
-            if (isAdminLogin && (!roles || !roles.includes('ADMIN'))) {
-                throw new Error('Access Denied: Not an Admin account');
-            }
 
             const userInfoData = { id, email: userEmail, roles, name, registerNumber };
             setUserInfo(userInfoData);

@@ -5,6 +5,7 @@ import { getTrackingId } from '../utils/helpers';
 const MatchingSupervision = () => {
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedMatch, setSelectedMatch] = useState(null);
 
     useEffect(() => {
         fetchMatches();
@@ -114,7 +115,7 @@ const MatchingSupervision = () => {
                                     </div>
                                 )}
                                 <button
-                                    onClick={() => alert('Notification system will be triggered to both parties.')}
+                                    onClick={() => setSelectedMatch(match)}
                                     style={{
                                         width: '100%',
                                         padding: '12px',
@@ -147,6 +148,73 @@ const MatchingSupervision = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Initiate Match Modal */}
+            {selectedMatch && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.7)', display: 'flex',
+                    justifyContent: 'center', alignItems: 'center', zIndex: 2500,
+                    padding: '20px', backdropFilter: 'blur(4px)'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white', borderRadius: '24px', maxWidth: '500px', width: '100%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '24px 30px', background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ margin: 0, fontWeight: '800', fontSize: '20px', color: 'white' }}>Confirm Match Initiation</h2>
+                            <button onClick={() => setSelectedMatch(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '18px', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '30px' }}>
+                            <p style={{ color: '#475569', fontSize: '15px', lineHeight: '1.6', margin: '0 0 20px 0' }}>
+                                Are you sure you want to initiate a match for these items? This action will:
+                            </p>
+                            <ul style={{ color: '#334155', fontSize: '14px', margin: '0 0 24px 0', paddingLeft: '20px', lineHeight: '1.8' }}>
+                                <li>Send a notification to the user who reported the lost item.</li>
+                                <li>Update the status of both items to "Match Pending".</li>
+                                <li>Provide instructions for the user to claim the item.</li>
+                            </ul>
+                            
+                            <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>FOUND ITEM:</span>
+                                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>{selectedMatch.found_item.category}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>LOST ITEM:</span>
+                                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>{selectedMatch.lost_item.category}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                                <button 
+                                    onClick={() => {
+                                        alert('Match Initiated Successfully! Notifications have been sent.');
+                                        setSelectedMatch(null);
+                                    }}
+                                    style={{
+                                        flex: 1, padding: '14px', backgroundColor: '#6366f1', color: 'white',
+                                        border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer',
+                                        fontSize: '15px', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.3)'
+                                    }}
+                                >
+                                    Confirm & Initiate
+                                </button>
+                                <button 
+                                    onClick={() => setSelectedMatch(null)}
+                                    style={{
+                                        flex: 1, padding: '14px', backgroundColor: '#f1f5f9', color: '#475569',
+                                        border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer',
+                                        fontSize: '15px'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

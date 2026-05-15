@@ -22,23 +22,19 @@ async def report_item(
     current_user: UserResponse = Depends(get_current_user),
     db = Depends(get_database)
 ):
-    import shutil
     import os
     from app.core.utils import generate_custom_id
+    from app.core.cloudinary_utils import upload_image
     
     image_url = None
     if image:
-        # Create static directory if it doesn't exist (safety check)
-        image_dir = os.path.join(os.getcwd(), "static", "images")
-        os.makedirs(image_dir, exist_ok=True)
-        
-        file_location = os.path.join(image_dir, image.filename)
-        with open(file_location, "wb+") as file_object:
-             shutil.copyfileobj(image.file, file_object)
-        
-        # Store relative path for database
-        image_url = f"static/images/{image.filename}"
-        print(f"Image saved to: {file_location}, URL: {image_url}")
+        # Upload to Cloudinary instead of local storage
+        uploaded_url = upload_image(image, folder="lostlink/items")
+        if uploaded_url:
+            image_url = uploaded_url
+            print(f"Image uploaded to Cloudinary: {image_url}")
+        else:
+            print("Failed to upload image to Cloudinary, continuing without image.")
 
     # Generate custom ID based on type
     lost_id = None
