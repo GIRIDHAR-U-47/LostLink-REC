@@ -59,15 +59,6 @@ if not exist node_modules (
 cd ..
 
 echo.
-echo [3/4] Setting up Mobile App...
-cd frontend
-if not exist node_modules (
-    echo Installing Mobile App dependencies...
-    call npm install >nul 2>&1
-)
-cd ..
-
-echo.
 echo ========================================================
 echo                 SETUP COMPLETE!
 echo ========================================================
