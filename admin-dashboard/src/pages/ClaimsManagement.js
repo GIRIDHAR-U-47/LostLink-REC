@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation} from 'react-router-dom';
 import adminService from '../services/adminService';
-import { API_BASE_URL } from '../services/api';
+
 import { formatDateTime, getItemId } from '../utils/helpers';
 
 const ClaimsManagement = () => {
@@ -167,7 +167,7 @@ const ClaimsManagement = () => {
         }
     };
 
-    const imgBase = API_BASE_URL.replace('/api', '');
+
 
     return (
         <div style={{ padding: '20px 0' }}>
