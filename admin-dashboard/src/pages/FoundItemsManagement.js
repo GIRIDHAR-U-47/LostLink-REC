@@ -527,26 +527,22 @@ const FoundItemsManagement = () => {
                             ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
                                     {/* Left: Media & Links */}
-                                    <div>
-                                        {(selectedItem.imageUrl || selectedItem.image_url) && (
-                                            <div style={{ marginBottom: '25px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                                               <img
-  src={selectedItem.imageUrl || selectedItem.image_url}
-  style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
-  alt="Found item">
-                                            </div>
-                                        )}
-
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
-                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Tracking ID</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: '#6c5ce7', fontFamily: 'monospace' }}>{getTrackingId(selectedItem)}</div>
-                                            </div>
-                                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
-                                                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase' }}>Current Status</div>
-                                                <div style={{ fontWeight: '700', fontSize: '16px', color: getStatusBadge(selectedItem.status).color }}>{getStatusBadge(selectedItem.status).label}</div>
-                                            </div>
-                                        </div>
+                                      <div>
+    {(selectedItem.imageUrl || selectedItem.image_url) && (
+      <div
+        style={{
+          marginBottom: '25px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+        }}
+      >
+        <img
+          src={selectedItem.imageUrl || selectedItem.image_url}
+          style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
+          alt="Found item"/>
+      </div>
+    )}
 
                                         {/* Reported Date */}
                                         <div style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', color: '#475569' }}>
