@@ -530,7 +530,10 @@ const FoundItemsManagement = () => {
                                     <div>
                                         {(selectedItem.imageUrl || selectedItem.image_url) && (
                                             <div style={{ marginBottom: '25px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                                                <img src={`${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`} style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }} alt="Found item" />
+                                               <img
+  src={selectedItem.imageUrl || selectedItem.image_url}
+  style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
+  alt="Found item">
                                             </div>
                                         )}
 
