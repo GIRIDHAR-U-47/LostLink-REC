@@ -6,10 +6,8 @@ import { formatDateTime, getItemId } from '../utils/helpers';
 
 const ClaimsManagement = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const itemId = queryParams.get('id');
-
     const [claims, setClaims] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ status: '', view: 'prioritized' });

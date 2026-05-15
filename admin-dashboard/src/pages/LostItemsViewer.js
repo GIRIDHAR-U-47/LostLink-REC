@@ -6,7 +6,7 @@ import { formatDateTime, getRelativeTime, getTrackingId, getItemId, getStatusBad
 
 const LostItemsViewer = () => {
     const location = useLocation();
-    const navigate = useNavigate();
+    
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
