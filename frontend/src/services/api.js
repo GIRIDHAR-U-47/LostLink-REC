@@ -2,21 +2,26 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-// Replace with your backend URL (e.g., 10.0.2.2 for Android Emulator, localhost for iOS Simulator)
-// Use computer's Local IP for physical device connection
+// API Configuration
+// For Development: It dynamically picks up your machine's IP (for Expo Go)
+// For Production: It uses the hardcoded production URL below
+const PRODUCTION_URL = 'https://lostlink-api.onrender.com'; // REPLACE with your live URL when deployed
+const DEV_PORT = '8080';
 
-// Function to dynamically get the local IP address from Expo Go
 const getBaseUrl = () => {
-  const defaultIp = '10.120.212.238'; // fallback IP
-  
-  // Constants.expoConfig?.hostUri contains the IP address and port of the packager
-  // e.g., '192.168.1.5:8081'
+  // If running in a standalone build (like APK), use the production URL
+  if (Constants.appOwnership !== 'expo') {
+    return PRODUCTION_URL;
+  }
+
+  // If running in Expo Go, try to get the local machine's IP
   if (Constants.expoConfig?.hostUri) {
     const ip = Constants.expoConfig.hostUri.split(':')[0];
-    return `http://${ip}:8080`;
+    return `http://${ip}:${DEV_PORT}`;
   }
   
-  return `http://${defaultIp}:8080`;
+  // Fallback for development if hostUri is missing
+  return `http://10.0.2.2:${DEV_PORT}`; // Default for Android Emulator
 };
 
 const BASE_URL = getBaseUrl();

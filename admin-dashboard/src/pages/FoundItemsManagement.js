@@ -293,7 +293,8 @@ const FoundItemsManagement = () => {
                 marginBottom: '30px',
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '15px'
+                gap: '15px',
+                alignItems: 'center'
             }}>
                 <div style={{ flex: '1', minWidth: '300px' }}>
                     <input
@@ -439,9 +440,9 @@ const FoundItemsManagement = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div style={{ height: '160px', backgroundColor: '#6c5ce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                                        <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔎</div>
-                                        <div style={{ color: 'white', fontWeight: '600' }}>{item.category}</div>
+                                    <div style={{ height: '200px', backgroundColor: '#6c5ce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔎</div>
+                                        <div style={{ color: 'white', fontWeight: '800', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>{item.category}</div>
                                     </div>
                                 )}
 
@@ -527,22 +528,22 @@ const FoundItemsManagement = () => {
                             ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
                                     {/* Left: Media & Links */}
-                                      <div>
-    {(selectedItem.imageUrl || selectedItem.image_url) && (
-      <div
-        style={{
-          marginBottom: '25px',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
-        }}
-      >
-        <img
-          src={selectedItem.imageUrl || selectedItem.image_url}
-          style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
-          alt="Found item"/>
-      </div>
-    )}
+                                    <div>
+                                        {(selectedItem.imageUrl || selectedItem.image_url) && (
+                                            <div
+                                                style={{
+                                                    marginBottom: '25px',
+                                                    borderRadius: '16px',
+                                                    overflow: 'hidden',
+                                                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                                                }}
+                                            >
+                                                <img
+                                                    src={selectedItem.imageUrl || selectedItem.image_url.startsWith('http') ? (selectedItem.imageUrl || selectedItem.image_url) : `${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`}
+                                                    style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
+                                                    alt="Found item" />
+                                            </div>
+                                        )}
 
                                         {/* Reported Date */}
                                         <div style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', color: '#475569' }}>
@@ -551,7 +552,9 @@ const FoundItemsManagement = () => {
 
                                         {/* Finder Details Section */}
                                         <div style={{ backgroundColor: '#f1f5f9', padding: '20px', borderRadius: '16px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px' }}>🔍 Finder Details</h4>
+                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>🔍</span> Finder Details
+                                            </h4>
                                             {selectedItem.user ? (
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px' }}>
                                                     <div>
@@ -574,7 +577,9 @@ const FoundItemsManagement = () => {
 
                                         {/* Linked Lost Report Section */}
                                         <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '16px', marginBottom: '20px', border: '2px dashed #e2e8f0' }}>
-                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px' }}>🔗 Internal Case Link</h4>
+                                            <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#334155', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>🔗</span> Internal Case Link
+                                            </h4>
                                             {context?.linked_item ? (
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '10px' }}>
                                                     <div style={{ flex: 1 }}>
