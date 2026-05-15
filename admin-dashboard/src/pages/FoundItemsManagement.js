@@ -420,7 +420,7 @@ const FoundItemsManagement = () => {
                                 {(item.imageUrl || item.image_url) ? (
                                     <div style={{ height: '200px', position: 'relative' }}>
                                         <img
-                                            src={`${adminService.getBaseUrl()}/${item.imageUrl || item.image_url}`}
+                                            src={item.imageUrl || item.image_url}
                                             alt={item.category}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         />
@@ -539,7 +539,7 @@ const FoundItemsManagement = () => {
                                                 }}
                                             >
                                                 <img
-                                                    src={selectedItem.imageUrl || selectedItem.image_url.startsWith('http') ? (selectedItem.imageUrl || selectedItem.image_url) : `${adminService.getBaseUrl()}/${selectedItem.imageUrl || selectedItem.image_url}`}
+                                                    src={selectedItem.imageUrl || selectedItem.image_url}
                                                     style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
                                                     alt="Found item" />
                                             </div>

@@ -343,9 +343,12 @@ const ClaimsManagement = () => {
                                                         </>
                                                     )}
                                                     {(claimContext.found_item.imageUrl || claimContext.found_item.image_url) && (
-                                                        <img src={`${imgBase}/${claimContext.found_item.imageUrl || claimContext.found_item.image_url}`} alt="Found"
-                                                            style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0' }}
-                                                            onError={(e) => { e.target.style.display = 'none'; }} />
+                                                        <img
+                                                            src={claimContext.found_item.imageUrl || claimContext.found_item.image_url}
+                                                            alt="Found"
+                                                            style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                        />
                                                     )}
                                                 </>
                                             ) : <div style={{ color: '#94a3b8', fontSize: '13px' }}>Item data unavailable</div>}
@@ -441,8 +444,11 @@ const ClaimsManagement = () => {
                                             {(selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl) && (
                                                 <div>
                                                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', marginBottom: '4px' }}>PROOF IMAGE</div>
-                                                    <img src={`${imgBase}/${selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl}`} alt="Proof"
-                                                        style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff' }} />
+                                                    <img
+                                                        src={selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl}
+                                                        alt="Proof"
+                                                        style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff' }}
+                                                    />
                                                 </div>
                                             )}
 

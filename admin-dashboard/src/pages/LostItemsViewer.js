@@ -340,7 +340,7 @@ const LostItemsViewer = () => {
                             {(item.imageUrl || item.image_url) ? (
                                 <div style={{ height: '200px', position: 'relative' }}>
                                     <img
-                                        src={`${API_BASE_URL.replace('/api', '')}/${item.imageUrl || item.image_url}`}
+                                        src={item.imageUrl || item.image_url}
                                         alt={item.category}
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                     />
@@ -496,9 +496,9 @@ const LostItemsViewer = () => {
                                             {(selectedItem.imageUrl || selectedItem.image_url) ? (
                                                 <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
                                                     <img
-                                                        src={`${API_BASE_URL.replace('/api', '')}/${selectedItem.imageUrl || selectedItem.image_url}`}
+                                                        src={selectedItem.imageUrl || selectedItem.image_url}
                                                         alt={selectedItem.category}
-                                                        style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }}
+                                                        style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
                                                     />
                                                 </div>
                                             ) : (
