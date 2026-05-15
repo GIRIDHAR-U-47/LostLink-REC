@@ -1,9 +1,9 @@
 @echo off
-setlocal
-title REC LostLink Setup
+setlocal enabledelayedexpansion
+title REC LostLink Setup and Runner
 
 echo ========================================================
-echo      REC LostLink - Automated Setup Script (Windows)
+echo      REC LostLink - Automated Setup ^& Run Script
 echo ========================================================
 
 :: Check for Python
@@ -22,61 +22,72 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: Get the local IP address
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4 Address"') do (
+    set "ip=%%a"
+    set "ip=!ip: =!"
+    goto :found_ip
+)
+:found_ip
+
 echo.
-echo [1/4] Setting up Backend (FastAPI)...
+echo [1/3] Checking Backend (FastAPI)...
 cd fastapi-backend
 if not exist venv (
     echo Creating virtual environment...
     python -m venv venv
+    call venv\Scripts\activate
+    echo Installing Python dependencies...
+    pip install -r requirements.txt
+    echo Seeding database...
+    python seed_data.py
+    deactivate
+) else (
+    echo Backend already set up.
 )
-call venv\Scripts\activate
-
-echo Installing Python dependencies...
-pip install -r requirements.txt
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Python dependencies.
-    pause
-    exit /b 1
-)
-
-echo.
-echo Seeding database...
-python seed_data.py
-if %errorlevel% neq 0 (
-    echo [WARNING] Database seeding failed. Ensure MongoDB is running.
-)
-
-deactivate
 cd ..
 
 echo.
-echo [2/4] Setting up Admin Dashboard...
+echo [2/3] Checking Admin Dashboard...
 cd admin-dashboard
 if not exist node_modules (
     echo Installing Admin Dashboard dependencies...
-    call npm install >nul 2>&1
+    call npm install
+) else (
+    echo Admin Dashboard already set up.
+)
+cd ..
+
+echo.
+echo [3/3] Checking Mobile App (Frontend)...
+cd frontend
+if not exist node_modules (
+    echo Installing Frontend dependencies...
+    call npm install
+) else (
+    echo Frontend already set up.
 )
 cd ..
 
 echo.
 echo ========================================================
-echo                 SETUP COMPLETE!
+echo                 STARTING SERVICES
 echo ========================================================
+echo Your Local IP: %ip%
 echo.
-echo To run the project, open 3 separate terminals:
+echo [Starting Backend on 0.0.0.0:8080]
+start "REC LostLink Backend" cmd /c "cd fastapi-backend && venv\Scripts\activate && uvicorn main:app --reload --host 0.0.0.0 --port 8080"
+
+echo [Starting Admin Dashboard]
+start "REC LostLink Admin" cmd /c "cd admin-dashboard && npm start"
+
+echo [Starting Mobile App (Expo) on %ip%]
+start "REC LostLink Expo" cmd /c "cd frontend && npx expo start --host lan"
+
 echo.
-echo [Terminal 1 - Backend]
-echo cd fastapi-backend
-echo venv\Scripts\activate
-echo uvicorn main:app --reload --host 0.0.0.0 --port 8080
+echo All services are starting in separate windows...
+echo Backend: http://%ip%:8080
+echo Admin: http://localhost:3000
 echo.
-echo [Terminal 2 - Admin Dashboard]
-echo cd admin-dashboard
-echo npm start
-echo.
-echo [Terminal 3 - Mobile App]
-echo cd frontend
-echo npx expo start
-echo.
-echo Press any key to exit...
+echo Press any key to exit this launcher...
 pause >nul

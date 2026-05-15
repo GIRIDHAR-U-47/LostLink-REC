@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import adminService from '../services/adminService';
-import { formatDateTime, formatTime, getRelativeTime } from '../utils/helpers';
+import { formatDateTime } from '../utils/helpers';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -150,10 +150,10 @@ const Dashboard = () => {
             {/* Analytics Tabs */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
                 {[
-                    { key: 'overview', label: '📊 Overview' },
-                    { key: 'trends', label: '📈 Trends' },
-                    { key: 'bottlenecks', label: '🔍 Bottlenecks' },
-                    { key: 'categories', label: '📦 Category Performance' },
+                    { key: 'overview', label: 'Overview' },
+                    { key: 'trends', label: 'Trends' },
+                    { key: 'bottlenecks', label: 'Bottlenecks' },
+                    { key: 'categories', label: 'Category Performance' },
                 ].map(tab => (
                     <button key={tab.key} onClick={() => setAnalyticsTab(tab.key)}
                         style={{

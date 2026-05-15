@@ -109,15 +109,19 @@ LostLink-REC/
 - **MongoDB**: Community Edition (Running on :27017)
 - **Expo Go**: Installed on your mobile device for testing
 
-### ⚡ Automated Setup (Recommended)
-We provide a one-click setup script for Windows users:
+### ⚡ Automated Setup & Run (Recommended)
+We provide a unified, one-click launcher for Windows users:
 1. Clone the repository:
    ```bash
    git clone https://github.com/GIRIDHAR-U-47/LostLink-REC.git
    cd LostLink-REC
    ```
-2. Run the established environment:
-   Double-click `setup_and_run.bat`. This will create virtual environments and install all dependencies for both frontend and backend.
+2. Run the platform:
+   Double-click `setup_and_run.bat`. This script automatically:
+   - Sets up the Python virtual environment and database seeding.
+   - Installs all Node modules for the web and mobile apps.
+   - Detects your local IP address for the mobile app to connect automatically.
+   - Launches the Backend, Admin Dashboard, and Mobile App in separate terminals!
 
 ### 🛠 Manual Launch
 If you prefer manual control, launch these in separate terminals:
@@ -135,16 +139,15 @@ cd admin-dashboard
 npm start
 ```
 
-**Terminal 3: Mobile App** 
-LostLink-REC\frontend\src\services\api.js - check the API_BASE_URL and update the IP address to your system's IP address
+**Terminal 3: Mobile App (Expo)** 
+The app automatically detects the local IP address assigned by Expo. No manual configuration is required in `api.js` anymore!
 
-check all the end points in the swagger ui http://localhost:8080/docs //If backend error check the terminal 1
 ```bash
 cd frontend
-npx expo start
-or 
-npx expo start --host lan -c
+npx expo start --host lan
 ```
+
+*Note: You can check all backend endpoints in the interactive Swagger UI at `http://localhost:8080/docs`.*
 
 ---
 

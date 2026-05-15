@@ -73,7 +73,7 @@ const adminService = {
     getCategories: () => api.get('/admin/stats/category-breakdown'),
 
     // Helpers
-    getBaseUrl: () => 'http://127.0.0.1:8080'
+    getBaseUrl: () => (process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://127.0.0.1:8080')
 };
 
 export default adminService;
