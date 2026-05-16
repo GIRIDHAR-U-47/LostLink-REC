@@ -90,3 +90,5 @@ const BASE_URL = 'https://lostlink-api.onrender.com';
 - [ ] Open the `/docs` URL on your live FastAPI backend to ensure the Swagger UI works.
 - [ ] Install the `.apk` on an Android phone and ensure it can connect and fetch data successfully.
 - [ ] Ensure that CORS origins in `fastapi-backend/main.py` include your new Vercel domain to prevent blocked requests.
+
+done ✅
