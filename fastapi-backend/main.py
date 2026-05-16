@@ -39,6 +39,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.responses import JSONResponse
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    print(f"GLOBAL ERROR: {str(exc)}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}\n\n{traceback.format_exc()}"}
+    )
+
+
 from app.api import auth, items, claims, admin, notifications
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(items.router, prefix="/api/items", tags=["items"])

@@ -83,7 +83,7 @@ const MyRequestsScreen = ({ navigation }) => {
 
                 {item.imageUrl ? (
                     <Image
-                        source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
+                        source={{ uri: item.imageUrl || item.image_url || 'https://via.placeholder.com/300?text=No+Image' }}
                         style={styles.itemImage}
                         resizeMode="cover"
                     />
@@ -109,7 +109,7 @@ const MyRequestsScreen = ({ navigation }) => {
                                 </Text>
                                 {item.user_claim.proofImageUrl && (
                                     <Image
-                                        source={{ uri: `${FILE_BASE_URL}${item.user_claim.proofImageUrl}` }}
+                                        source={{ uri: item.user_claim.proofImageUrl || 'https://via.placeholder.com/300?text=No+Proof+Image' }}
                                         style={styles.proofImage}
                                         resizeMode="cover"
                                     />

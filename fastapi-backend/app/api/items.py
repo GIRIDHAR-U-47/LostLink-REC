@@ -7,64 +7,72 @@ from app.models.item_model import ItemCreate, ItemResponse, ItemInDB
 from app.models.enums import ItemType, ItemStatus, Role
 from app.models.user_model import UserResponse
 from app.api.deps import get_current_user
+from app.core.utils import generate_custom_id
+from app.core.cloudinary_utils import upload_image
+from fastapi.encoders import jsonable_encoder
+import os
 
 router = APIRouter()
 
 @router.post("/report", response_model=ItemResponse)
 async def report_item(
-    type: str = Form(...),
+    type: ItemType = Form(...),
     category: str = Form(...),
     description: str = Form(...),
     location: str = Form(...),
-    status: str = Form(...),
+    status: ItemStatus = Form(...),
     dateTime: str = Form(None), # Frontend sends ISO string
     image: UploadFile = File(None),
     current_user: UserResponse = Depends(get_current_user),
-    db = Depends(get_database)
-):
-    import os
-    from app.core.utils import generate_custom_id
-    from app.core.cloudinary_utils import upload_image
-    
-    image_url = None
-    if image:
-        # Upload to Cloudinary instead of local storage
-        uploaded_url = upload_image(image, folder="lostlink/items")
-        if uploaded_url:
-            image_url = uploaded_url
-            print(f"Image uploaded to Cloudinary: {image_url}")
+    try:
+        image_url = None
+        if image:
+            # Upload to Cloudinary instead of local storage
+            uploaded_url = upload_image(image, folder="lostlink/items")
+            if uploaded_url:
+                image_url = uploaded_url
+                print(f"Image uploaded to Cloudinary: {image_url}")
+            else:
+                print("Failed to upload image to Cloudinary, continuing without image.")
+
+        # Generate custom ID based on type
+        lost_id = None
+        found_id = None
+        if type == ItemType.LOST:
+            lost_id = generate_custom_id("LOST")
         else:
-            print("Failed to upload image to Cloudinary, continuing without image.")
+            found_id = generate_custom_id("FND")
 
-    # Generate custom ID based on type
-    lost_id = None
-    found_id = None
-    if type == "LOST":
-        lost_id = generate_custom_id("LOST")
-    else:
-        found_id = generate_custom_id("FND")
+        # Construct item dict manually since we are using Form data
+        item_dict = {
+            "type": type,
+            "category": category,
+            "description": description,
+            "location": location,
+            "status": status, # PENDING/OPEN
+            "user_id": str(current_user.id),
+            "imageUrl": image_url,
+            "dateTime": datetime.utcnow(),
+            "Lost_ID": lost_id,
+            "Found_ID": found_id
+        }
 
-    # Construct item dict manually since we are using Form data
-    item_dict = {
-        "type": type,
-        "category": category,
-        "description": description,
-        "location": location,
-        "status": status, # PENDING/OPEN
-        "user_id": str(current_user.id),
-        "imageUrl": image_url,
-        "dateTime": datetime.utcnow(),
-        "Lost_ID": lost_id,
-        "Found_ID": found_id
-    }
+        # Insert into DB
+        result = await db["items"].insert_one(item_dict)
+        created_item = await db["items"].find_one({"_id": result.inserted_id})
+        
+        if not created_item:
+             raise HTTPException(status_code=404, detail="Item creation failed")
 
-    # Insert into DB
-    result = await db["items"].insert_one(item_dict)
-    created_item = await db["items"].find_one({"_id": result.inserted_id})
-    
-    # Populate user
-    created_item["user"] = current_user.model_dump(by_alias=True)
-    return created_item
+        # Populate user details
+        created_item["user"] = current_user.model_dump(by_alias=True)
+        
+        return jsonable_encoder(created_item)
+    except Exception as e:
+        print(f"CRITICAL ERROR in report_item: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @router.get("/feed", response_model=List[ItemResponse])
 async def get_item_feed(

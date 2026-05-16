@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://lostlink-api.onrender.com';
 
 const api = axios.create({
-    baseURL: API_BASE_URL
+    baseURL: `${API_BASE_URL}/api`
 });
 
 // Request interceptor for adding auth token

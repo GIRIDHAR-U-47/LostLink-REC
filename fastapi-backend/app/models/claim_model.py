@@ -23,7 +23,7 @@ class ClaimInDB(ClaimBase):
     submission_date: datetime = Field(default_factory=datetime.utcnow, alias="submissionDate", serialization_alias="submissionDate")
 
 class ClaimResponse(ClaimBase):
-    id: Optional[PyObjectId] = Field(validation_alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
     item: Optional[ItemResponse] = None
     claimant: Optional[UserResponse] = None
     submission_date: datetime = Field(alias="submissionDate", serialization_alias="submissionDate")

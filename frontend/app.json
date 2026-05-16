@@ -1,18 +1,17 @@
 {
   "expo": {
     "name": "LostLink",
-    "slug": "lostlink-rec",
+    "slug": "frontend",
     "version": "1.0.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "description": "REC LostLink - A lost and found management system for Rajalakshmi Engineering College.",
     "orientation": "portrait",
-    "icon": "./assets/logo1.png",
+    "icon": "./assets/logo_square.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
     "splash": {
-      "image": "./assets/logo1.png",
+      "image": "./assets/logo_square.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -24,10 +23,9 @@
       "package": "com.rec.lostlink",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo1.png",
+        "foregroundImage": "./assets/logo_square.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -35,7 +33,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/logo1.png"
+      "favicon": "./assets/logo_square.png"
     },
     "extra": {
       "eas": {

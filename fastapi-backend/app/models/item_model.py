@@ -40,7 +40,7 @@ class ItemInDB(ItemBase):
     user_id: str # Reference to User ID
 
 class ItemResponse(ItemBase):
-    id: Optional[PyObjectId] = Field(validation_alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
     user: Optional[UserResponse] = None # Populated user details
     user_claim: Optional[dict] = None # Details of user's claim if applicable
     is_report: Optional[bool] = False # Flag item as user's report

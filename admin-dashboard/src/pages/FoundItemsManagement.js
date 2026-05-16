@@ -373,9 +373,9 @@ const FoundItemsManagement = () => {
             {/* Items Grid */}
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '100px', color: '#636e72' }}>
-                    <div style={{ width: '40px', height: '40px', border: '3px solid #f3f3f3', borderTop: '3px solid #6c5ce7', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
-                    <p style={{ fontSize: '18px' }}>Syncing discovery logs...</p>
-                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                    <div className="spinner" style={{ margin: '0 auto 20px' }}></div>
+                    <p style={{ fontSize: '18px', fontWeight: '600' }}>Loading data...</p>
+                    <p style={{ fontSize: '14px', color: '#94a3b8' }}>Render free tier may take 30-60s to wake up.</p>
                 </div>
             ) : items.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '80px', backgroundColor: 'white', borderRadius: '16px', color: '#b2bec3' }}>
@@ -420,9 +420,10 @@ const FoundItemsManagement = () => {
                                 {(item.imageUrl || item.image_url) ? (
                                     <div style={{ height: '200px', position: 'relative' }}>
                                         <img
-                                            src={item.imageUrl || item.image_url}
+                                            src={item.imageUrl || item.image_url || "/no-image.png"}
                                             alt={item.category}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            onError={(e) => { e.target.src = "/no-image.png"; }}
                                         />
                                         <div style={{
                                             position: 'absolute',
@@ -520,10 +521,9 @@ const FoundItemsManagement = () => {
 
                         <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
                             {fetchingContext ? (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>
-                                    <div style={{ width: '30px', height: '30px', border: '3px solid #f3f3f3', borderTop: '3px solid #6c5ce7', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
-                                    Syncing Case Context...
-                                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                                 <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>
+                                    <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+                                    <p>Loading data...</p>
                                 </div>
                             ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
@@ -539,9 +539,11 @@ const FoundItemsManagement = () => {
                                                 }}
                                             >
                                                 <img
-                                                    src={selectedItem.imageUrl || selectedItem.image_url}
+                                                    src={selectedItem.imageUrl || selectedItem.image_url || "/no-image.png"}
                                                     style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
-                                                    alt="Found item" />
+                                                    alt="Found item"
+                                                    onError={(e) => { e.target.src = "/no-image.png"; }}
+                                                />
                                             </div>
                                         )}
 

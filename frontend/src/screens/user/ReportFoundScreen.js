@@ -86,13 +86,17 @@ const ReportFoundScreen = ({ navigation }) => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                transformRequest: (data, headers) => {
+                    return data;
+                },
             });
 
             Alert.alert('Success', 'Found item reported! Please submit the item to Student Care.');
             navigation.goBack();
         } catch (error) {
-            console.log(error);
-            Alert.alert('Error', 'Failed to report item');
+            console.log('Report Found Error:', error);
+            const errorMsg = error.response?.data?.detail || 'Failed to report item. Please check your connection.';
+            Alert.alert('Error', errorMsg);
         } finally {
             setLoading(false);
         }

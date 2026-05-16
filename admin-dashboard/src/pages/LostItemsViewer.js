@@ -287,8 +287,9 @@ const LostItemsViewer = () => {
             {/* Items Display */}
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '100px', color: '#636e72' }}>
-                    <div className="spinner"></div>
-                    <p style={{ marginTop: '20px', fontSize: '18px' }}>Scanning repository...</p>
+                    <div className="spinner" style={{ margin: '0 auto 20px' }}></div>
+                    <p style={{ fontSize: '18px', fontWeight: '600' }}>Loading data...</p>
+                    <p style={{ fontSize: '14px', color: '#94a3b8' }}>The backend might take a moment to wake up (30-60s).</p>
                 </div>
             ) : items.length === 0 ? (
                 <div style={{
@@ -340,9 +341,10 @@ const LostItemsViewer = () => {
                             {(item.imageUrl || item.image_url) ? (
                                 <div style={{ height: '200px', position: 'relative' }}>
                                     <img
-                                        src={item.imageUrl || item.image_url}
+                                        src={item.imageUrl || item.image_url || "/no-image.png"}
                                         alt={item.category}
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e) => { e.target.src = "/no-image.png"; }}
                                     />
                                     <div style={{
                                         position: 'absolute',
@@ -487,7 +489,10 @@ const LostItemsViewer = () => {
                         {/* Modal Body */}
                         <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
                             {fetchingContext ? (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Reconstructing Case History...</div>
+                                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>
+                                    <div className="spinner" style={{ margin: '0 auto 20px' }}></div>
+                                    <p>Loading data...</p>
+                                </div>
                             ) : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
                                     {/* Left Side: Media & Context */}
@@ -496,9 +501,10 @@ const LostItemsViewer = () => {
                                             {(selectedItem.imageUrl || selectedItem.image_url) ? (
                                                 <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
                                                     <img
-                                                        src={selectedItem.imageUrl || selectedItem.image_url}
+                                                        src={selectedItem.imageUrl || selectedItem.image_url || "/no-image.png"}
                                                         alt={selectedItem.category}
                                                         style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
+                                                        onError={(e) => { e.target.src = "/no-image.png"; }}
                                                     />
                                                 </div>
                                             ) : (

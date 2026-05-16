@@ -220,7 +220,9 @@ const ClaimsManagement = () => {
             {/* Claims List */}
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '60px', color: '#6c5ce7' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600' }}>Loading claims...</div>
+                    <div className="spinner" style={{ marginBottom: '10px' }}></div>
+                    <div style={{ fontSize: '14px', fontWeight: '600' }}>Loading data...</div>
+                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>Render free tier may take 30-60s to wake up.</p>
                 </div>
             ) : claims.length === 0 ? (
                 <div className="empty-state"><p>No claims to display</p></div>
@@ -315,7 +317,8 @@ const ClaimsManagement = () => {
 
                         {contextLoading ? (
                             <div style={{ padding: '60px', textAlign: 'center', color: '#6c5ce7' }}>
-                                <div style={{ fontSize: '14px', fontWeight: '600' }}>Loading full context...</div>
+                                <div className="spinner" style={{ marginBottom: '10px' }}></div>
+                                <div style={{ fontSize: '14px', fontWeight: '600' }}>Loading data...</div>
                             </div>
                         ) : (
                             <div style={{ padding: '24px' }}>
@@ -344,10 +347,10 @@ const ClaimsManagement = () => {
                                                     )}
                                                     {(claimContext.found_item.imageUrl || claimContext.found_item.image_url) && (
                                                         <img
-                                                            src={claimContext.found_item.imageUrl || claimContext.found_item.image_url}
+                                                            src={claimContext.found_item.imageUrl || claimContext.found_item.image_url || "/no-image.png"}
                                                             alt="Found"
                                                             style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0' }}
-                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                            onError={(e) => { e.target.src = "/no-image.png"; }}
                                                         />
                                                     )}
                                                 </>
@@ -444,11 +447,12 @@ const ClaimsManagement = () => {
                                             {(selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl) && (
                                                 <div>
                                                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', marginBottom: '4px' }}>PROOF IMAGE</div>
-                                                    <img
-                                                        src={selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl}
-                                                        alt="Proof"
-                                                        style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff' }}
-                                                    />
+                                                        <img
+                                                            src={selectedClaim.proofImageUrl || claimContext?.claim?.proofImageUrl || "/no-image.png"}
+                                                            alt="Proof"
+                                                            style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff' }}
+                                                            onError={(e) => { e.target.src = "/no-image.png"; }}
+                                                        />
                                                 </div>
                                             )}
 

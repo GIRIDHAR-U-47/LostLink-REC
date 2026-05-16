@@ -86,13 +86,17 @@ const ReportLostScreen = ({ navigation }) => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                transformRequest: (data, headers) => {
+                    return data; // Ensure Axios doesn't stringify FormData
+                },
             });
 
             Alert.alert('Success', 'Lost item reported successfully!');
             navigation.goBack();
         } catch (error) {
-            console.log(error);
-            Alert.alert('Error', 'Failed to report item');
+            console.log('Report Lost Error:', error);
+            const errorMsg = error.response?.data?.detail || 'Failed to report item. Please check your connection.';
+            Alert.alert('Error', errorMsg);
         } finally {
             setLoading(false);
         }

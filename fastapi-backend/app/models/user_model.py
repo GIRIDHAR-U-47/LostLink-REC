@@ -20,7 +20,7 @@ class UserInDB(UserBase):
     hashed_password: str
 
 class UserResponse(UserBase):
-    id: Optional[PyObjectId] = Field(validation_alias="_id", default=None)
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
 
     class Config:
         populate_by_name = True

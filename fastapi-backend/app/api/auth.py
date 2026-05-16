@@ -96,5 +96,7 @@ async def register(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Database error during register: {e}")
-        raise HTTPException(status_code=500, detail="Database connection error")
+        print(f"CRITICAL ERROR during register: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database/Registration error: {str(e)}")

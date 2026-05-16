@@ -58,7 +58,7 @@ async def submit_claim(
     created_claim["item"] = item
     created_claim["claimant"] = current_user.model_dump(by_alias=True)
     
-    return created_claim
+    return jsonable_encoder(created_claim)
 
 def convert_object_ids(obj):
     if isinstance(obj, list):

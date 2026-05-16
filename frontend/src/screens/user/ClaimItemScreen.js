@@ -64,6 +64,9 @@ const ClaimItemScreen = ({ route, navigation }) => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                transformRequest: (data, headers) => {
+                    return data;
+                },
             });
 
             Alert.alert('Success', 'Claim request submitted successfully!');
@@ -81,13 +84,11 @@ const ClaimItemScreen = ({ route, navigation }) => {
             <Text style={styles.header}>Claim Item</Text>
 
             <View style={styles.itemCard}>
-                {item.imageUrl && (
-                    <Image
-                        source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
-                        style={styles.itemImage}
-                        resizeMode="cover"
-                    />
-                )}
+                <Image
+                    source={{ uri: item.imageUrl || item.image_url || 'https://via.placeholder.com/300?text=No+Image' }}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                />
                 <View style={styles.infoRow}>
                     <Text style={styles.label}>Category:</Text>
                     <Text style={styles.value}>{item.category}</Text>

@@ -41,13 +41,11 @@ const FoundItemsScreen = ({ navigation }) => {
                 <Text style={styles.date}>{new Date(item.dateTime).toLocaleDateString()}</Text>
             </View>
 
-            {item.imageUrl ? (
-                <Image
-                    source={{ uri: `${FILE_BASE_URL}${item.imageUrl}` }}
-                    style={styles.itemImage}
-                    resizeMode="cover"
-                />
-            ) : null}
+            <Image
+                source={{ uri: item.imageUrl || item.image_url || 'https://via.placeholder.com/300?text=No+Image' }}
+                style={styles.itemImage}
+                resizeMode="cover"
+            />
 
             <Text style={styles.location}>📍 {item.location}</Text>
             <Text style={styles.description}>{item.description}</Text>
