@@ -40,7 +40,7 @@ def seed_data():
             "roles": ["ADMIN"], # Kept for backward compat if needed
             "registerNumber": "ADMIN001",
             "department": "Admin Dept",
-            "phone": "9999999999",
+            "phone": "8422949798",
             "is_active": True,
             "created_at": datetime.utcnow()
         },
@@ -50,7 +50,7 @@ def seed_data():
             "password": get_password_hash("student123"),
             "role": "USER",
             "roles": ["USER"],
-            "registerNumber": "2101001",
+            "registerNumber": "231501047",
             "department": "AIML",
             "phone": "9876543210",
             "is_active": True,
