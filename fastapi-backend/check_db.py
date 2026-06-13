@@ -1,4 +1,3 @@
-
 import asyncio
 import os
 from dotenv import load_dotenv
@@ -15,7 +14,7 @@ async def check_users():
     db = client[db_name]
     
     users = await db["users"].find().to_list(10)
-    print(f"Found {len(users)} users:")
+    print(f"Found {len(users)} users in the database:")
     for user in users:
         print(f"- {user.get('email')} (Role: {user.get('role')})")
     
