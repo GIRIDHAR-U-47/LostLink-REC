@@ -4,7 +4,7 @@ This document reflects the current logic implemented in `fastapi-backend/app/api
 
 ## Roles
 - `USER`
-- `ADMIN`
+- `ADMIN`with roles
 
 Role enforcement is done with JWT + `get_current_user` in protected routes.
 
