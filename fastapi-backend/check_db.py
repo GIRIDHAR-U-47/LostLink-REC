@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
-
+#just to check db is properly working or not.
 async def check_users():
     mongo_url = os.getenv("MONGODB_URL")
     db_name = os.getenv("DATABASE_NAME")
