@@ -18,6 +18,7 @@
 
 ## 📖 Introduction
 
+
 **REC LostLink** is a comprehensive, centralized solution designed to modernize the way lost and found items are handled within the REC campus. Moving away from manual logbooks, LostLink provides a secure, real-time platform for students to report lost items and for staff to manage found inventory with cryptographic verification.
 
 > [!IMPORTANT]
