@@ -2,7 +2,7 @@
 
 ## Supported Version
 Current maintained line:
-- `1.0.x`
+- `1.0.1`
 
 ## Reporting a Vulnerability
 Please do not open public issues for security reports.
